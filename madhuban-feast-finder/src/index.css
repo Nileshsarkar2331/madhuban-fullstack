@@ -1,0 +1,149 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Madhuban Restaurant Design System - All colors, gradients, fonts, etc defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Nature-Inspired Green Theme */
+    --background: 120 20% 98%; /* Very light green cream #F8FDF8 */
+    --foreground: 140 60% 15%; /* Deep forest green for text */
+
+    --card: 0 0% 100%; /* Pure white for cards */
+    --card-foreground: 140 60% 15%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 140 60% 15%;
+
+    /* Primary: Deep Forest Green #1B5E20 */
+    --primary: 140 60% 22%;
+    --primary-foreground: 0 0% 98%;
+    --primary-hover: 140 70% 18%;
+
+    /* Secondary: Fresh Leaf Green #4CAF50 */
+    --secondary: 122 50% 55%;
+    --secondary-foreground: 0 0% 98%;
+    --secondary-hover: 122 60% 45%;
+
+    --muted: 120 20% 94%;
+    --muted-foreground: 140 30% 45%;
+
+    --accent: 100 70% 60%; /* Bright lime green accent */
+    --accent-foreground: 140 60% 15%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 120 20% 88%;
+    --input: 120 20% 88%;
+    --ring: 140 60% 22%;
+
+    --radius: 0.75rem; /* 12px rounded corners */
+
+    /* Custom Nature Colors */
+    --forest: 140 60% 22%; /* Deep Forest Green #1B5E20 */
+    --forest-light: 140 45% 35%;
+    --forest-dark: 140 70% 18%;
+    --leaf: 122 50% 55%; /* Fresh Leaf Green #4CAF50 */
+    --leaf-light: 122 40% 70%;
+    --leaf-dark: 122 60% 40%;
+    --sage: 100 20% 80%; /* Sage Green #C8E6C9 */
+    --mint: 150 30% 85%; /* Mint Green #E0F2E1 */
+    --lime: 100 70% 60%; /* Bright Lime #8BC34A */
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(var(--forest)), hsl(var(--forest-dark)));
+    --gradient-secondary: linear-gradient(135deg, hsl(var(--leaf)), hsl(var(--leaf-dark)));
+    --gradient-hero: linear-gradient(135deg, hsl(var(--forest) / 0.9), hsl(var(--forest-dark) / 0.8));
+    --gradient-nature: linear-gradient(135deg, hsl(var(--leaf)), hsl(var(--lime)));
+
+    /* Shadows */
+    --shadow-card: 0 4px 20px hsl(var(--forest) / 0.08);
+    --shadow-button: 0 4px 12px hsl(var(--leaf) / 0.3);
+    --shadow-hero: 0 20px 60px hsl(var(--forest) / 0.15);
+
+    /* Animations */
+    --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+    --sidebar-background: 0 0% 98%;
+
+    --sidebar-foreground: 240 5.3% 26.1%;
+
+    --sidebar-primary: 240 5.9% 10%;
+
+    --sidebar-primary-foreground: 0 0% 98%;
+
+    --sidebar-accent: 240 4.8% 95.9%;
+
+    --sidebar-accent-foreground: 240 5.9% 10%;
+
+    --sidebar-border: 220 13% 91%;
+
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    /* Dark mode with nature theme */
+    --background: 140 40% 8%;
+    --foreground: 120 20% 95%;
+    --card: 140 30% 12%;
+    --card-foreground: 120 20% 95%;
+    --primary: 122 50% 55%;
+    --primary-foreground: 140 60% 15%;
+    --secondary: 140 60% 22%;
+    --secondary-foreground: 120 20% 95%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground font-poppins;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold;
+  }
+}
+
+@layer components {
+  /* Nature-Themed Custom Components */
+  .btn-primary {
+    @apply bg-primary text-primary-foreground hover:bg-primary/90 shadow-md transition-all duration-300 font-medium rounded-xl px-6 py-3;
+  }
+
+  .btn-secondary {
+    @apply bg-secondary text-secondary-foreground hover:bg-secondary/90 shadow-md transition-all duration-300 font-medium rounded-xl px-6 py-3;
+  }
+
+  .btn-hero {
+    @apply bg-gradient-to-r from-leaf to-leaf-dark text-primary-foreground hover:from-leaf-dark hover:to-leaf transform hover:scale-105 transition-all duration-300 font-semibold rounded-xl px-8 py-4 shadow-lg;
+  }
+
+  .btn-outline {
+    @apply border-2 border-primary text-primary bg-transparent hover:bg-primary hover:text-primary-foreground transition-all duration-300 font-medium rounded-xl px-6 py-3;
+  }
+
+  .card-restaurant {
+    @apply bg-card rounded-xl shadow-card border border-border/50 overflow-hidden transition-all duration-300 hover:shadow-lg hover:scale-[1.02];
+  }
+
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary to-forest-light bg-clip-text text-transparent;
+  }
+
+  .hero-section {
+    @apply relative bg-gradient-to-br from-primary/90 via-primary/80 to-primary/70 text-primary-foreground overflow-hidden;
+  }
+
+  .nature-glow {
+    @apply shadow-lg shadow-leaf/20 hover:shadow-xl hover:shadow-leaf/30 transition-all duration-300;
+  }
+}
