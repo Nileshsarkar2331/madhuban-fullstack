@@ -3,19 +3,21 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Search, Plus, Star, Clock, Flame } from 'lucide-react';
 import { apiRequest } from '@/lib/api';
+import { useNavigate } from 'react-router-dom';
 
 const Menu = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [loadingId, setLoadingId] = useState<number | null>(null);
+  const navigate = useNavigate();
 
   const handleAddToCart = async (dishId: number) => {
     const token = localStorage.getItem('token');
 
+    // 🔒 Redirect to login if not authenticated
     if (!token) {
-      alert('Please login first');
+      navigate('/login');
       return;
     }
 
@@ -35,16 +37,36 @@ const Menu = () => {
 
       alert('✅ Added to cart');
     } catch (err) {
-      alert('❌ Error adding to cart');
       console.error(err);
+      alert('❌ Failed to add item');
     } finally {
       setLoadingId(null);
     }
   };
 
   const dishes = [
-    { id: 67, name: 'Chicken Biryani', description: 'Fragrant basmati rice with chicken', price: 80, rating: 4.9, cookTime: '30 min', spiceLevel: 2, isVeg: false, popular: true },
-    { id: 15, name: 'Paneer Butter Masala', description: 'Creamy paneer curry', price: 220, rating: 4.9, cookTime: '25 min', spiceLevel: 1, isVeg: true, popular: true },
+    {
+      id: 67,
+      name: 'Chicken Biryani',
+      description: 'Fragrant basmati rice with chicken',
+      price: 80,
+      rating: 4.9,
+      cookTime: '30 min',
+      spiceLevel: 2,
+      isVeg: false,
+      popular: true,
+    },
+    {
+      id: 15,
+      name: 'Paneer Butter Masala',
+      description: 'Creamy paneer curry',
+      price: 220,
+      rating: 4.9,
+      cookTime: '25 min',
+      spiceLevel: 1,
+      isVeg: true,
+      popular: true,
+    },
   ];
 
   const getSpiceIcons = (level: number) =>
