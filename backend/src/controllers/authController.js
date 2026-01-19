@@ -1,37 +1,32 @@
 const User = require("../models/User");
 const Otp = require("../models/Otp");
 const jwt = require("jsonwebtoken");
+const bcrypt = require("bcryptjs");
 
-// Generate 6-digit OTP
+/* -------------------- OTP UTILS -------------------- */
 const generateOtp = () => {
   return Math.floor(100000 + Math.random() * 900000).toString();
 };
+
+/* ================= OTP LOGIN ================= */
 
 // SEND OTP
 exports.sendOtp = async (req, res) => {
   try {
     const { phone } = req.body;
-
     if (!phone) {
       return res.status(400).json({ message: "Phone number is required" });
     }
 
     const otp = generateOtp();
-    const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 mins
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
 
     await Otp.deleteMany({ phone });
-
-    await Otp.create({
-      phone,
-      otp,
-      expiresAt,
-    });
+    await Otp.create({ phone, otp, expiresAt });
 
     console.log(`📲 OTP for ${phone}: ${otp}`);
 
-    res.status(200).json({
-      message: "OTP sent successfully",
-    });
+    res.status(200).json({ message: "OTP sent successfully" });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Server error" });
@@ -42,13 +37,11 @@ exports.sendOtp = async (req, res) => {
 exports.verifyOtp = async (req, res) => {
   try {
     const { phone, otp } = req.body;
-
     if (!phone || !otp) {
       return res.status(400).json({ message: "Phone and OTP are required" });
     }
 
     const otpRecord = await Otp.findOne({ phone, otp });
-
     if (!otpRecord) {
       return res.status(400).json({ message: "Invalid OTP" });
     }
@@ -58,12 +51,8 @@ exports.verifyOtp = async (req, res) => {
     }
 
     let user = await User.findOne({ phone });
-
     if (!user) {
       user = await User.create({ phone, isVerified: true });
-    } else {
-      user.isVerified = true;
-      await user.save();
     }
 
     await Otp.deleteMany({ phone });
@@ -77,10 +66,71 @@ exports.verifyOtp = async (req, res) => {
     res.status(200).json({
       message: "Login successful",
       token,
-      user: {
-        id: user._id,
-        phone: user.phone,
-      },
+      user,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+/* ================= EMAIL/PASSWORD AUTH ================= */
+
+// REGISTER
+exports.register = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email & password required" });
+    }
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: "User already exists" });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const user = await User.create({
+      email,
+      password: hashedPassword,
+    });
+
+    res.status(201).json({ message: "User registered successfully" });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// LOGIN (EMAIL + PASSWORD)
+exports.login = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) {
+      return res.status(400).json({ message: "Email & password required" });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user || !user.password) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.password);
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    const token = jwt.sign(
+      { userId: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
+
+    res.status(200).json({
+      message: "Login successful",
+      token,
+      user,
     });
   } catch (error) {
     console.error(error);
