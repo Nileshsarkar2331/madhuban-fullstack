@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Search, Plus, Star, Clock, Flame } from 'lucide-react';
-import { API_BASE_URL } from '@/lib/api';
+import { apiRequest } from '@/lib/api';
 
 const Menu = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -22,10 +22,9 @@ const Menu = () => {
     try {
       setLoadingId(dishId);
 
-      const res = await fetch(`${API_BASE_URL}/api/cart/add`, {
+      await apiRequest('/api/cart/add', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
@@ -33,10 +32,6 @@ const Menu = () => {
           quantity: 1,
         }),
       });
-
-      if (!res.ok) {
-        throw new Error('Failed to add to cart');
-      }
 
       alert('✅ Added to cart');
     } catch (err) {
