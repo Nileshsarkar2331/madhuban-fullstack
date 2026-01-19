@@ -1,8 +1,8 @@
 const app = require("./src/app");
 
-// Render provides PORT dynamically
 const PORT = process.env.PORT || 5050;
 
-app.listen(PORT, () => {
+// IMPORTANT: bind to 0.0.0.0 for Render
+app.listen(PORT, "0.0.0.0", () => {
   console.log(`🚀 Backend running on port ${PORT}`);
 });
