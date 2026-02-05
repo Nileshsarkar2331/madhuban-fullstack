@@ -105,6 +105,9 @@ const Footer = () => {
         <div className="border-t border-primary-foreground/20 mt-8 pt-6 text-center text-primary-foreground/60 text-sm">
           <p>&copy; 2024 Madhu वन Cafe & Restaurant. All rights reserved.</p>
         </div>
+         <div className="border-t border-primary-foreground/20 mt-8 pt-6 text-center text-primary-foreground/60 text-sm">
+          <p> Made by Nilesh Sarkar❤️</p>
+        </div>
       </div>
     </footer>
   );

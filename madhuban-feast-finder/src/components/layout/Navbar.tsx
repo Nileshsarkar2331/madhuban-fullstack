@@ -31,7 +31,7 @@ const Navbar = () => {
           <Link to="/" className="flex items-center gap-2">
             <Leaf className="h-6 w-6 text-secondary" />
             <span className="text-2xl font-bold text-gradient">
-              Madhuबन<span className="text-primary">वन</span>
+              Madhu<span className="text-primary">वन</span>
             </span>
           </Link>
 
