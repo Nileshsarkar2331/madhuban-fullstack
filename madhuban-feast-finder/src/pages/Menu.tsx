@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Search, Plus, Minus } from 'lucide-react';
 import { addToCart, removeFromCart, updateCartQuantity } from '@/lib/cart';
 import { useCart } from '@/hooks/use-cart';
+import { useNavigate, useParams } from 'react-router-dom';
 
 type MenuItem = {
   id: number;
@@ -31,10 +32,22 @@ const Menu = () => {
     {}
   );
   const { items: cartItems } = useCart();
+  const { category } = useParams();
+  const navigate = useNavigate();
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
   }, []);
+
+  useEffect(() => {
+    if (!category) return;
+    const el = document.getElementById(category);
+    if (!el) return;
+    const id = window.setTimeout(() => {
+      el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 0);
+    return () => window.clearTimeout(id);
+  }, [category]);
 
   const getSelectedPrice = (item: MenuItem) => {
     if (!item.sizes || item.sizes.length === 0) return item.price;
@@ -498,6 +511,10 @@ const Menu = () => {
   ];
 
   const filteredSections = useMemo(() => {
+    if (category) {
+      const section = sections.find((s) => s.id === category);
+      return section ? [section] : [];
+    }
     const q = searchQuery.trim().toLowerCase();
     if (!q) return sections;
 
@@ -538,12 +555,7 @@ const Menu = () => {
             <button
               key={tile.id}
               type="button"
-              onClick={() => {
-                const el = document.getElementById(tile.id);
-                if (el) {
-                  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-              }}
+              onClick={() => navigate(`/menu/${tile.id}`)}
               className="group flex flex-col items-center gap-2 rounded-2xl border border-border/60 bg-white p-3 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
             >
               <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary/10 to-secondary/10 text-2xl">
@@ -556,6 +568,17 @@ const Menu = () => {
           ))}
         </div>
       </div>
+
+      {category && (
+        <div className="mb-6 flex items-center justify-between">
+          <Button variant="outline" onClick={() => navigate('/menu')}>
+            Back to Categories
+          </Button>
+          <span className="text-sm text-muted-foreground">
+            {filteredSections[0]?.items.length || 0} items
+          </span>
+        </div>
+      )}
 
       <div className="space-y-10">
         {filteredSections.map((section) => (
