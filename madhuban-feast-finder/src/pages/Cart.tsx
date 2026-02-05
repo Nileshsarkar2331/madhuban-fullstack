@@ -1,78 +1,25 @@
-import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
-
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
-
-interface CartItem {
-  dishId: string;
-  quantity: number;
-}
+import { useCart } from "@/hooks/use-cart";
+import { removeFromCart, updateCartQuantity } from "@/lib/cart";
 
 const Cart = () => {
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { items: cartItems } = useCart();
 
-  const token = localStorage.getItem("token");
-
-  // 🔹 Fetch cart
-  const fetchCart = async () => {
-    try {
-      const res = await fetch(`${API_BASE_URL}/api/cart`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const data = await res.json();
-      setCartItems(data.items || []);
-    } catch (err) {
-      console.error("Failed to fetch cart", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // 🔹 Update quantity
-  const updateQuantity = async (dishId: string, change: number) => {
+  const updateQuantity = (dishId: string, change: number) => {
     const item = cartItems.find((i) => i.dishId === dishId);
     if (!item) return;
 
     const newQty = item.quantity + change;
-    if (newQty <= 0) return removeItem(dishId);
+    if (newQty <= 0) {
+      removeFromCart(dishId);
+      return;
+    }
 
-    await fetch(`${API_BASE_URL}/api/cart/${dishId}`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({ quantity: newQty }),
-    });
-
-    fetchCart();
+    updateCartQuantity(dishId, newQty);
   };
-
-  // 🔹 Remove item
-  const removeItem = async (dishId: string) => {
-    await fetch(`${API_BASE_URL}/api/cart/${dishId}`, {
-      method: "DELETE",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
-
-    fetchCart();
-  };
-
-  useEffect(() => {
-    fetchCart();
-  }, []);
-
-  if (loading) {
-    return <p className="text-center py-20">Loading cart...</p>;
-  }
 
   if (cartItems.length === 0) {
     return (
@@ -83,6 +30,11 @@ const Cart = () => {
     );
   }
 
+  const grandTotal = cartItems.reduce(
+    (sum, item) => sum + (item.price || 0) * item.quantity,
+    0
+  );
+
   return (
     <div className="max-w-4xl mx-auto py-12 px-4">
       <h1 className="text-3xl font-bold mb-6">Your Cart</h1>
@@ -91,9 +43,20 @@ const Cart = () => {
         {cartItems.map((item) => (
           <Card key={item.dishId}>
             <CardContent className="flex items-center justify-between p-6">
-              <div>
-                <p className="font-semibold">Dish ID</p>
-                <p className="text-sm text-muted-foreground">{item.dishId}</p>
+              <div className="flex items-center gap-4">
+                {item.image && (
+                  <img
+                    src={item.image}
+                    alt={item.name || "Dish"}
+                    className="h-14 w-14 rounded-md object-cover"
+                  />
+                )}
+                <div>
+                  <p className="font-semibold">{item.name || "Dish"}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {item.price ? `₹${item.price}` : `ID: ${item.dishId}`}
+                  </p>
+                </div>
               </div>
 
               <div className="flex items-center gap-3">
@@ -119,7 +82,7 @@ const Cart = () => {
               <Button
                 variant="ghost"
                 className="text-red-500"
-                onClick={() => removeItem(item.dishId)}
+                onClick={() => removeFromCart(item.dishId)}
               >
                 <Trash2 size={18} />
               </Button>
@@ -129,6 +92,11 @@ const Cart = () => {
       </div>
 
       <Separator className="my-6" />
+
+      <div className="flex items-center justify-between mb-4">
+        <span className="text-lg font-semibold">Grand Total</span>
+        <span className="text-xl font-bold">₹{grandTotal}</span>
+      </div>
 
       <Button className="w-full" size="lg">
         Proceed to Checkout

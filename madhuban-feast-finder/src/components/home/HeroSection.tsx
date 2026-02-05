@@ -1,9 +1,12 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Star } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import heroImage from '@/assets/curry-hero.jpg';
 
 const HeroSection = () => {
+  const navigate = useNavigate();
+
   return (
     <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden">
       {/* Background Image with Overlay */}
@@ -43,13 +46,12 @@ const HeroSection = () => {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-6">
-            <Button variant="hero" size="xl" className="group">
+            <Button variant="hero" size="xl" className="group"  onClick={() => navigate('/menu') }>
               Order Now
               <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
+              
             </Button>
-            <Button variant="outline" size="xl" className="bg-primary-foreground/10 border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary backdrop-blur-sm">
-              View Menu
-            </Button>
+         
           </div>
 
           {/* Stats */}

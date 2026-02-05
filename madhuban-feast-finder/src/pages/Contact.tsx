@@ -20,9 +20,11 @@ const Contact = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission here
-    console.log('Form submitted:', formData);
-    // Reset form
+    const subject = encodeURIComponent(`New message from ${formData.name}`);
+    const body = encodeURIComponent(
+      `Name: ${formData.name}\nEmail: ${formData.email}\n\nMessage:\n${formData.message}`
+    );
+    window.location.href = `mailto:nonvegcoder@gmail.com?subject=${subject}&body=${body}`;
     setFormData({ name: '', email: '', message: '' });
   };
 

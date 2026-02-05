@@ -7,8 +7,12 @@ import samosaImage from '@/assets/samosa.jpg';
 import biryaniImage from '@/assets/biryani.jpg';
 import naanImage from '@/assets/naan.jpg';
 import gulabJamunImage from '@/assets/gulab-jamun.jpg';
+import { useNavigate } from 'react-router-dom';
+import { addToCart } from '@/lib/cart';
+
 
 const FeaturedDishes = () => {
+   const navigate = useNavigate();
   const dishes = [
     {
       id: 1,
@@ -118,6 +122,13 @@ const FeaturedDishes = () => {
                   size="icon"
                   variant="secondary"
                   className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 h-8 w-8"
+                  onClick={() =>
+                    addToCart(String(dish.id), 1, {
+                      name: dish.name,
+                      price: dish.price,
+                      image: dish.image,
+                    })
+                  }
                 >
                   <Plus className="h-4 w-4" />
                 </Button>
@@ -159,7 +170,18 @@ const FeaturedDishes = () => {
                 {/* Price and Add Button */}
                 <div className="flex items-center justify-between pt-2">
                   <span className="text-xl font-bold text-primary">₹{dish.price}</span>
-                  <Button variant="secondary" size="sm" className="group/btn">
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="group/btn"
+                    onClick={() =>
+                      addToCart(String(dish.id), 1, {
+                        name: dish.name,
+                        price: dish.price,
+                        image: dish.image,
+                      })
+                    }
+                  >
                     Add to Cart
                     <Plus className="h-4 w-4 transition-transform group-hover/btn:scale-110" />
                   </Button>
@@ -171,7 +193,9 @@ const FeaturedDishes = () => {
 
         {/* View Menu CTA */}
         <div className="text-center mt-12">
-          <Button variant="outline" size="lg" className="group">
+          
+
+          <Button variant="outline" size="lg" className="group"  onClick={() => navigate('/menu') }>
             View Full Menu
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
           </Button>
