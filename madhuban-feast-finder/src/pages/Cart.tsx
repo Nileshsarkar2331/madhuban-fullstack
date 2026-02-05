@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
@@ -6,6 +7,10 @@ import { useCart } from "@/hooks/use-cart";
 import { clearCart, removeFromCart, updateCartQuantity } from "@/lib/cart";
 
 const Cart = () => {
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
+  }, []);
+
   const { items: cartItems } = useCart();
 
   const updateQuantity = (dishId: string, change: number) => {

@@ -1,9 +1,13 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Star, Heart, Award, Clock } from 'lucide-react';
 
 const About = () => {
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+  }, []);
+
   const stats = [
     { icon: Heart, label: 'Happy Customers', value: '10,000+' },
     { icon: Award, label: 'Years of Excellence', value: '15+' },

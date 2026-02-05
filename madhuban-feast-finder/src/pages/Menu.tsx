@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -31,6 +31,10 @@ const Menu = () => {
     {}
   );
   const { items: cartItems } = useCart();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+  }, []);
 
   const getSelectedPrice = (item: MenuItem) => {
     if (!item.sizes || item.sizes.length === 0) return item.price;
