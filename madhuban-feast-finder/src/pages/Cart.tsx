@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
 import { useCart } from "@/hooks/use-cart";
-import { removeFromCart, updateCartQuantity } from "@/lib/cart";
+import { clearCart, removeFromCart, updateCartQuantity } from "@/lib/cart";
 
 const Cart = () => {
   const { items: cartItems } = useCart();
@@ -42,7 +42,7 @@ const Cart = () => {
       <div className="space-y-4">
         {cartItems.map((item) => (
           <Card key={item.dishId}>
-            <CardContent className="flex items-center justify-between p-6">
+            <CardContent className="flex flex-col gap-4 p-4 sm:flex-row sm:items-center sm:justify-between sm:p-6">
               <div className="flex items-center gap-4">
                 {item.image && (
                   <img
@@ -59,7 +59,7 @@ const Cart = () => {
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center justify-between gap-3 sm:justify-start">
                 <Button
                   variant="outline"
                   size="icon"
@@ -81,7 +81,7 @@ const Cart = () => {
 
               <Button
                 variant="ghost"
-                className="text-red-500"
+                className="text-red-500 self-end sm:self-auto"
                 onClick={() => removeFromCart(item.dishId)}
               >
                 <Trash2 size={18} />
@@ -93,14 +93,20 @@ const Cart = () => {
 
       <Separator className="my-6" />
 
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
         <span className="text-lg font-semibold">Grand Total</span>
         <span className="text-xl font-bold">₹{grandTotal}</span>
       </div>
 
-      <Button className="w-full" size="lg">
-        Proceed to Checkout
-      </Button>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <Button variant="outline" onClick={clearCart}>
+          Clear Cart
+        </Button>
+        <Button className="w-full sm:w-auto" size="lg">
+          Proceed to Checkout
+        </Button>
+      </div>
+
     </div>
   );
 };

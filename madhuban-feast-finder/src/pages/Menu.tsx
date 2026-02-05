@@ -3,8 +3,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Search, Plus } from 'lucide-react';
-import { addToCart } from '@/lib/cart';
+import { Search, Plus, Minus } from 'lucide-react';
+import { addToCart, removeFromCart, updateCartQuantity } from '@/lib/cart';
+import { useCart } from '@/hooks/use-cart';
 
 type MenuItem = {
   id: number;
@@ -20,6 +21,7 @@ type MenuItem = {
 type MenuSection = {
   title: string;
   items: MenuItem[];
+  id: string;
 };
 
 const Menu = () => {
@@ -28,6 +30,7 @@ const Menu = () => {
   const [selectedSizes, setSelectedSizes] = useState<Record<number, string>>(
     {}
   );
+  const { items: cartItems } = useCart();
 
   const getSelectedPrice = (item: MenuItem) => {
     if (!item.sizes || item.sizes.length === 0) return item.price;
@@ -36,21 +39,29 @@ const Menu = () => {
     return found?.price ?? item.sizes[0].price;
   };
 
+  const getSelectedLabel = (item: MenuItem) =>
+    item.sizes && item.sizes.length > 0
+      ? selectedSizes[item.id] || item.sizes[0].label
+      : undefined;
+
+  const getCartKey = (item: MenuItem) => {
+    const sizeLabel = getSelectedLabel(item);
+    return sizeLabel ? `${item.id}-${sizeLabel}` : String(item.id);
+  };
+
   const handleAddToCart = (item: MenuItem) => {
     setLoadingId(item.id);
     const price = getSelectedPrice(item);
-    const sizeLabel =
-      item.sizes && item.sizes.length > 0
-        ? selectedSizes[item.id] || item.sizes[0].label
-        : undefined;
+    const sizeLabel = getSelectedLabel(item);
     const name = sizeLabel ? `${item.name} (${sizeLabel})` : item.name;
-    addToCart(String(item.id), 1, { name, price });
+    addToCart(getCartKey(item), 1, { name, price });
     setTimeout(() => setLoadingId(null), 300);
   };
 
   const sections: MenuSection[] = [
     {
-      title: 'Combo Momo Special',
+      id: 'momos',
+      title: 'Momos',
       items: [
         {
           id: 1001,
@@ -61,9 +72,42 @@ const Menu = () => {
             'Kurkure Momo, Steam Momo, Tandoori Momo, Afghani Momo',
           tag: 'Combo',
         },
+        { id: 2101, name: 'Veg Momo', price: 59, priceLabel: '₹59' },
+        { id: 2102, name: 'Chicken Momo', price: 69, priceLabel: '₹69' },
+        {
+          id: 2103,
+          name: 'Kurkure Momo',
+          price: 99,
+          priceLabel: '₹99 / ₹109',
+          sizes: [
+            { label: 'Veg', price: 99 },
+            { label: 'Non-Veg', price: 109 },
+          ],
+        },
+        {
+          id: 2104,
+          name: 'Tandoori Momo',
+          price: 129,
+          priceLabel: '₹129 / ₹139',
+          sizes: [
+            { label: 'Veg', price: 129 },
+            { label: 'Non-Veg', price: 139 },
+          ],
+        },
+        {
+          id: 2105,
+          name: 'Afghani Momo',
+          price: 129,
+          priceLabel: '₹129 / ₹139',
+          sizes: [
+            { label: 'Veg', price: 129 },
+            { label: 'Non-Veg', price: 139 },
+          ],
+        },
       ],
     },
     {
+      id: 'drinks',
       title: 'Drinks',
       items: [
         { id: 1101, name: 'Kulhad Chai', price: 15, priceLabel: '₹15' },
@@ -83,6 +127,7 @@ const Menu = () => {
       ],
     },
     {
+      id: 'pizza',
       title: 'Continental - Pizza',
       items: [
         {
@@ -132,6 +177,7 @@ const Menu = () => {
       ],
     },
     {
+      id: 'burger',
       title: 'Continental - Burger',
       items: [
         {
@@ -149,6 +195,7 @@ const Menu = () => {
       ],
     },
     {
+      id: 'pasta',
       title: 'Continental - Pasta',
       items: [
         {
@@ -166,6 +213,7 @@ const Menu = () => {
       ],
     },
     {
+      id: 'combos',
       title: 'Combos',
       items: [
         {
@@ -192,6 +240,7 @@ const Menu = () => {
       ],
     },
     {
+      id: 'nonveg-main',
       title: 'Non-Veg Main Course',
       items: [
         {
@@ -258,6 +307,7 @@ const Menu = () => {
       ],
     },
     {
+      id: 'rice',
       title: 'Rice',
       items: [
         { id: 1501, name: 'Plain Rice', price: 70, priceLabel: '₹70' },
@@ -266,6 +316,7 @@ const Menu = () => {
       ],
     },
     {
+      id: 'roti',
       title: 'Roti / Bread',
       items: [
         { id: 1601, name: 'Tawa Roti', price: 10, priceLabel: '₹10' },
@@ -280,6 +331,7 @@ const Menu = () => {
       ],
     },
     {
+      id: 'salad',
       title: 'Salad / Raita',
       items: [
         { id: 1701, name: 'Green Salad', price: 50, priceLabel: '₹50' },
@@ -290,6 +342,7 @@ const Menu = () => {
       ],
     },
     {
+      id: 'chilli',
       title: 'Chilli Items',
       items: [
         { id: 1801, name: 'Soyabean Chilli', price: 99, priceLabel: '₹99' },
@@ -305,21 +358,30 @@ const Menu = () => {
         { id: 1806, name: 'Chilli Mushroom', price: 119, priceLabel: '₹119' },
         {
           id: 1807,
-          name: 'Chicken Lollipop (Dry/Gravy)',
+          name: 'Chicken Lollipop',
           price: 149,
           priceLabel: '₹149 / ₹169',
+          sizes: [
+            { label: 'Dry', price: 149 },
+            { label: 'Gravy', price: 169 },
+          ],
         },
         { id: 1808, name: 'KFC Chicken Leg Piece', price: 89, priceLabel: '₹89' },
       ],
     },
     {
+      id: 'rolls',
       title: 'Rolls',
       items: [
         {
           id: 1901,
-          name: 'Kolkata Kathi Roll (Veg / Non-Veg)',
+          name: 'Kolkata Kathi Roll',
           price: 49,
           priceLabel: '₹49 / ₹69',
+          sizes: [
+            { label: 'Veg', price: 49 },
+            { label: 'Non-Veg', price: 69 },
+          ],
         },
         { id: 1902, name: 'Paneer Kathi Roll', price: 79, priceLabel: '₹79' },
         { id: 1903, name: 'Spring Roll', price: 69, priceLabel: '₹69' },
@@ -328,10 +390,15 @@ const Menu = () => {
           name: 'Egg Roll / Double Egg Roll',
           price: 59,
           priceLabel: '₹59 / ₹69',
+          sizes: [
+            { label: 'Egg Roll', price: 59 },
+            { label: 'Double Egg Roll', price: 69 },
+          ],
         },
       ],
     },
     {
+      id: 'veg-main',
       title: 'Veg Main Course',
       items: [
         { id: 2001, name: 'Mix Veg', price: 149, priceLabel: '₹149' },
@@ -351,40 +418,9 @@ const Menu = () => {
       ],
     },
     {
+      id: 'chinese',
       title: 'Chinese',
       items: [
-        { id: 2101, name: 'Veg Momo', price: 59, priceLabel: '₹59' },
-        { id: 2102, name: 'Chicken Momo', price: 69, priceLabel: '₹69' },
-        {
-          id: 2103,
-          name: 'Kurkure Momo',
-          price: 99,
-          priceLabel: '₹99 / ₹109',
-          sizes: [
-            { label: 'Veg', price: 99 },
-            { label: 'Non-Veg', price: 109 },
-          ],
-        },
-        {
-          id: 2104,
-          name: 'Tandoori Momo',
-          price: 129,
-          priceLabel: '₹129 / ₹139',
-          sizes: [
-            { label: 'Veg', price: 129 },
-            { label: 'Non-Veg', price: 139 },
-          ],
-        },
-        {
-          id: 2105,
-          name: 'Afghani Momo',
-          price: 129,
-          priceLabel: '₹129 / ₹139',
-          sizes: [
-            { label: 'Veg', price: 129 },
-            { label: 'Non-Veg', price: 139 },
-          ],
-        },
         {
           id: 2106,
           name: 'Veg Noodles (Street Style)',
@@ -412,6 +448,7 @@ const Menu = () => {
       ],
     },
     {
+      id: 'starters',
       title: 'Starters',
       items: [
         { id: 2201, name: 'Chicken Roasted', price: 129, priceLabel: '₹129' },
@@ -426,6 +463,7 @@ const Menu = () => {
       ],
     },
     {
+      id: 'soup',
       title: 'Soup',
       items: [
         { id: 2301, name: 'Hot & Sour Soup', price: 49, priceLabel: '₹49' },
@@ -434,6 +472,25 @@ const Menu = () => {
         { id: 2304, name: 'Chicken Soup', price: 59, priceLabel: '₹59' },
       ],
     },
+  ];
+
+  const categoryTiles = [
+    { id: 'momos', label: 'Momos', emoji: '🥟' },
+    { id: 'drinks', label: 'Drinks', emoji: '🥤' },
+    { id: 'pizza', label: 'Pizza', emoji: '🍕' },
+    { id: 'burger', label: 'Burger', emoji: '🍔' },
+    { id: 'pasta', label: 'Pasta', emoji: '🍝' },
+    { id: 'combos', label: 'Combos', emoji: '🎁' },
+    { id: 'nonveg-main', label: 'Non‑Veg', emoji: '🍗' },
+    { id: 'veg-main', label: 'Veg', emoji: '🥘' },
+    { id: 'chinese', label: 'Chinese', emoji: '🍜' },
+    { id: 'rolls', label: 'Rolls', emoji: '🌯' },
+    { id: 'chilli', label: 'Chilli', emoji: '🌶️' },
+    { id: 'starters', label: 'Starters', emoji: '🍟' },
+    { id: 'rice', label: 'Rice', emoji: '🍚' },
+    { id: 'roti', label: 'Roti', emoji: '🫓' },
+    { id: 'salad', label: 'Salad', emoji: '🥗' },
+    { id: 'soup', label: 'Soup', emoji: '🍲' },
   ];
 
   const filteredSections = useMemo(() => {
@@ -468,10 +525,38 @@ const Menu = () => {
         />
       </div>
 
+      <div className="mb-10">
+        <h2 className="text-xl font-semibold text-primary mb-4 text-center">
+          What are you craving?
+        </h2>
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4">
+          {categoryTiles.map((tile) => (
+            <button
+              key={tile.id}
+              type="button"
+              onClick={() => {
+                const el = document.getElementById(tile.id);
+                if (el) {
+                  el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+              }}
+              className="group flex flex-col items-center gap-2 rounded-2xl border border-border/60 bg-white p-3 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+            >
+              <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary/10 to-secondary/10 text-2xl">
+                {tile.emoji}
+              </div>
+              <span className="text-sm font-medium text-foreground text-center">
+                {tile.label}
+              </span>
+            </button>
+          ))}
+        </div>
+      </div>
+
       <div className="space-y-10">
         {filteredSections.map((section) => (
-          <div key={section.title}>
-            <div className="flex items-center justify-between mb-4">
+          <div key={section.title} id={section.id}>
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
               <h2 className="text-2xl font-semibold text-primary">
                 {section.title}
               </h2>
@@ -483,7 +568,7 @@ const Menu = () => {
             <div className="grid md:grid-cols-2 gap-6">
               {section.items.map((item) => (
                 <Card key={item.id} className="card-restaurant">
-                  <CardContent className="p-6 space-y-3">
+                  <CardContent className="p-4 sm:p-6 space-y-3">
                     <div className="flex items-start justify-between gap-4">
                       <div>
                         <h3 className="text-lg font-semibold">{item.name}</h3>
@@ -509,7 +594,7 @@ const Menu = () => {
                       )}
                     </div>
 
-                    <div className="flex items-center justify-between pt-1">
+                    <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-center gap-3">
                         <span className="text-xl font-bold">
                           {item.sizes && item.sizes.length > 0
@@ -537,14 +622,54 @@ const Menu = () => {
                           </select>
                         )}
                       </div>
-                      <Button
-                        size="sm"
-                        disabled={loadingId === item.id}
-                        onClick={() => handleAddToCart(item)}
-                      >
-                        {loadingId === item.id ? 'Adding...' : 'Add to Cart'}
-                        <Plus className="ml-1 h-4 w-4" />
-                      </Button>
+                      {(() => {
+                        const cartKey = getCartKey(item);
+                        const qty =
+                          cartItems.find((i) => i.dishId === cartKey)
+                            ?.quantity || 0;
+
+                        if (qty === 0) {
+                          return (
+                            <Button
+                              size="sm"
+                              disabled={loadingId === item.id}
+                              onClick={() => handleAddToCart(item)}
+                              className="w-full sm:w-auto"
+                            >
+                              {loadingId === item.id ? 'Adding...' : 'Add to Cart'}
+                              <Plus className="ml-1 h-4 w-4" />
+                            </Button>
+                          );
+                        }
+
+                        return (
+                          <div className="flex items-center gap-3">
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => {
+                                if (qty <= 1) {
+                                  removeFromCart(cartKey);
+                                  return;
+                                }
+                                updateCartQuantity(cartKey, qty - 1);
+                              }}
+                            >
+                              <Minus className="h-4 w-4" />
+                            </Button>
+                            <span className="w-6 text-center font-medium">
+                              {qty}
+                            </span>
+                            <Button
+                              variant="outline"
+                              size="icon"
+                              onClick={() => handleAddToCart(item)}
+                            >
+                              <Plus className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        );
+                      })()}
                     </div>
                   </CardContent>
                 </Card>

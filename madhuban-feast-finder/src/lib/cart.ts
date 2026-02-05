@@ -74,3 +74,7 @@ export const removeFromCart = (dishId: string) => {
   const items = readCart().filter((item) => item.dishId !== dishId);
   writeCart(items);
 };
+
+export const clearCart = () => {
+  writeCart([]);
+};

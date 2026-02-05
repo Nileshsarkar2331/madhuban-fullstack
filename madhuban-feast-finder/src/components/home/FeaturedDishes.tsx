@@ -2,17 +2,19 @@ import React from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Star, Clock, Flame, ArrowRight } from 'lucide-react';
+import { Plus, Star, Clock, Flame, ArrowRight, Minus } from 'lucide-react';
 import samosaImage from '@/assets/samosa.jpg';
 import biryaniImage from '@/assets/biryani.jpg';
 import naanImage from '@/assets/naan.jpg';
 import gulabJamunImage from '@/assets/gulab-jamun.jpg';
 import { useNavigate } from 'react-router-dom';
-import { addToCart } from '@/lib/cart';
+import { addToCart, removeFromCart, updateCartQuantity } from '@/lib/cart';
+import { useCart } from '@/hooks/use-cart';
 
 
 const FeaturedDishes = () => {
    const navigate = useNavigate();
+  const { items: cartItems } = useCart();
   const dishes = [
     {
       id: 1,
@@ -168,24 +170,66 @@ const FeaturedDishes = () => {
                 )}
 
                 {/* Price and Add Button */}
-                <div className="flex items-center justify-between pt-2">
-                  <span className="text-xl font-bold text-primary">₹{dish.price}</span>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    className="group/btn"
-                    onClick={() =>
-                      addToCart(String(dish.id), 1, {
-                        name: dish.name,
-                        price: dish.price,
-                        image: dish.image,
-                      })
-                    }
-                  >
-                    Add to Cart
-                    <Plus className="h-4 w-4 transition-transform group-hover/btn:scale-110" />
-                  </Button>
-                </div>
+              <div className="flex items-center justify-between pt-2">
+                <span className="text-xl font-bold text-primary">₹{dish.price}</span>
+                {(() => {
+                  const cartKey = String(dish.id);
+                  const qty =
+                    cartItems.find((i) => i.dishId === cartKey)?.quantity || 0;
+
+                  if (qty === 0) {
+                    return (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="group/btn"
+                        onClick={() =>
+                          addToCart(cartKey, 1, {
+                            name: dish.name,
+                            price: dish.price,
+                            image: dish.image,
+                          })
+                        }
+                      >
+                        Add to Cart
+                        <Plus className="h-4 w-4 transition-transform group-hover/btn:scale-110" />
+                      </Button>
+                    );
+                  }
+
+                  return (
+                    <div className="flex items-center gap-3">
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => {
+                          if (qty <= 1) {
+                            removeFromCart(cartKey);
+                            return;
+                          }
+                          updateCartQuantity(cartKey, qty - 1);
+                        }}
+                      >
+                        <Minus className="h-4 w-4" />
+                      </Button>
+                      <span className="w-6 text-center font-medium">{qty}</span>
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() =>
+                          addToCart(cartKey, 1, {
+                            name: dish.name,
+                            price: dish.price,
+                            image: dish.image,
+                          })
+                        }
+                      >
+                        <Plus className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  );
+                })()}
+              </div>
               </CardContent>
             </Card>
           ))}
