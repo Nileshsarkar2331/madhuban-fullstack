@@ -32,17 +32,17 @@ const Contact = () => {
     {
       icon: MapPin,
       title: 'Address',
-      content: '123 Food Street, Connaught Place, New Delhi, India 110001',
+      content: 'Shaktifarm Taigor Nagar',
     },
     {
       icon: Phone,
       title: 'Phone',
-      content: '+91 98765 43210',
+      content: '+91 7500111774',
     },
     {
       icon: Mail,
       title: 'Email',
-      content: 'hello@madhuban.com',
+      content: 'nonvegcoder@gmail.com',
     },
     {
       icon: Clock,
