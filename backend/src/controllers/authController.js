@@ -79,12 +79,18 @@ exports.verifyOtp = async (req, res) => {
 // REGISTER
 exports.register = async (req, res) => {
   try {
-    const { email, password } = req.body;
-    if (!email || !password) {
-      return res.status(400).json({ message: "Email & password required" });
+    const { username, password, email } = req.body;
+    if (!username || !password) {
+      return res
+        .status(400)
+        .json({ message: "Username & password required" });
     }
 
-    const existingUser = await User.findOne({ email });
+    const orConditions = [{ username }];
+    if (email) {
+      orConditions.push({ email });
+    }
+    const existingUser = await User.findOne({ $or: orConditions });
     if (existingUser) {
       return res.status(400).json({ message: "User already exists" });
     }
@@ -92,7 +98,8 @@ exports.register = async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const user = await User.create({
-      email,
+      username,
+      email: email || null,
       password: hashedPassword,
     });
 
@@ -106,12 +113,16 @@ exports.register = async (req, res) => {
 // LOGIN (EMAIL + PASSWORD)
 exports.login = async (req, res) => {
   try {
-    const { email, password } = req.body;
-    if (!email || !password) {
-      return res.status(400).json({ message: "Email & password required" });
+    const { username, email, password } = req.body;
+    if ((!username && !email) || !password) {
+      return res
+        .status(400)
+        .json({ message: "Username or email & password required" });
     }
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne(
+      username ? { username } : { email }
+    );
     if (!user || !user.password) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
