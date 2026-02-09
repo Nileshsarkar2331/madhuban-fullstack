@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { API_BASE_URL } from "@/lib/api";
 import { useNavigate, Link } from "react-router-dom";
+import heroImage from "@/assets/curry-hero.jpg";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -50,8 +51,12 @@ const Register = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted">
-      <Card className="w-full max-w-md">
+    <div
+      className="min-h-screen relative flex items-center justify-center bg-cover bg-center"
+      style={{ backgroundImage: `url(${heroImage})` }}
+    >
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-md" />
+      <Card className="w-full max-w-md relative z-10 shadow-2xl">
         <CardHeader>
           <CardTitle className="text-center text-2xl">Create Account</CardTitle>
         </CardHeader>

@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
@@ -7,6 +8,7 @@ import { useCart } from "@/hooks/use-cart";
 import { clearCart, removeFromCart, updateCartQuantity } from "@/lib/cart";
 
 const Cart = () => {
+  const navigate = useNavigate();
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
   }, []);
@@ -107,7 +109,11 @@ const Cart = () => {
         <Button variant="outline" onClick={clearCart}>
           Clear Cart
         </Button>
-        <Button className="w-full sm:w-auto" size="lg">
+        <Button
+          className="w-full sm:w-auto"
+          size="lg"
+          onClick={() => navigate("/checkout")}
+        >
           Proceed to Checkout
         </Button>
       </div>
