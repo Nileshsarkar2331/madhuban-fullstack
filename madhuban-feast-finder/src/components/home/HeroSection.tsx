@@ -8,7 +8,7 @@ const HeroSection = () => {
   const navigate = useNavigate();
 
   return (
-    <section className="relative min-h-[80vh] flex items-center justify-center overflow-hidden">
+    <section className="relative min-h-[70vh] sm:min-h-[80vh] flex items-center justify-center overflow-hidden">
       {/* Background Image with Overlay */}
       <div className="absolute inset-0 z-0">
         <img 
@@ -21,7 +21,7 @@ const HeroSection = () => {
 
       {/* Content */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-primary-foreground">
-        <div className="space-y-6 animate-fade-in">
+        <div className="space-y-5 sm:space-y-6 animate-fade-in">
           {/* Badge */}
           <div className="inline-flex items-center space-x-2 bg-secondary/20 backdrop-blur-sm rounded-full px-4 py-2 border border-secondary/30">
             <Star className="h-4 w-4 text-secondary fill-current" />
@@ -29,24 +29,24 @@ const HeroSection = () => {
           </div>
 
           {/* Main Heading */}
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight">
+          <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold leading-tight">
             Welcome to{' '}
             <span className="text-secondary drop-shadow-lg">Madhu <span className="text-primary-foreground">वन</span></span>
             <br />
-            <span className="text-2xl md:text-3xl lg:text-4xl font-normal">
+            <span className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-normal">
               Cafe & Restaurant
             </span>
           </h1>
 
           {/* Subtitle */}
-          <p className="text-xl md:text-2xl text-primary-foreground/90 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-base sm:text-lg md:text-2xl text-primary-foreground/90 max-w-3xl mx-auto leading-relaxed">
             Perfect venue for Birthday Party, Kitty Party, Anniversary Party, Engagement Party, Pre-Wedding Shoots & Bonfire Events.
             Meeting Hall Available.
           </p>
 
           {/* CTA Buttons */}
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-6">
-            <Button variant="hero" size="xl" className="group"  onClick={() => navigate('/menu') }>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 pt-4 sm:pt-6">
+            <Button variant="hero" size="xl" className="group w-full sm:w-auto" onClick={() => navigate('/menu') }>
               Order Now
               <ArrowRight className="h-5 w-5 transition-transform group-hover:translate-x-1" />
               
@@ -55,18 +55,18 @@ const HeroSection = () => {
           </div>
 
           {/* Stats */}
-          <div className="flex flex-wrap items-center justify-center gap-8 pt-12">
+          <div className="grid grid-cols-3 gap-4 sm:gap-8 pt-8 sm:pt-12">
             <div className="text-center">
-              <div className="text-3xl font-bold text-secondary">1000+</div>
-              <div className="text-sm text-primary-foreground/80">Happy Customers</div>
+              <div className="text-2xl sm:text-3xl font-bold text-secondary">1000+</div>
+              <div className="text-xs sm:text-sm text-primary-foreground/80">Happy Customers</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-secondary">25+</div>
-              <div className="text-sm text-primary-foreground/80">Authentic Dishes</div>
+              <div className="text-2xl sm:text-3xl font-bold text-secondary">25+</div>
+              <div className="text-xs sm:text-sm text-primary-foreground/80">Authentic Dishes</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl font-bold text-secondary">30min</div>
-              <div className="text-sm text-primary-foreground/80">Fast Delivery</div>
+              <div className="text-2xl sm:text-3xl font-bold text-secondary">30min</div>
+              <div className="text-xs sm:text-sm text-primary-foreground/80">Fast Delivery</div>
             </div>
           </div>
         </div>

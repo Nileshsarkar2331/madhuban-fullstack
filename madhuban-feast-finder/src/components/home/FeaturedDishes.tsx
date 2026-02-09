@@ -76,17 +76,17 @@ const FeaturedDishes = () => {
   };
 
   return (
-    <section className="py-16 bg-background">
+    <section className="py-12 sm:py-16 bg-background">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-8 sm:mb-12">
           <Badge variant="secondary" className="mb-4">
             Our Specialties
           </Badge>
-          <h2 className="text-3xl md:text-4xl font-bold text-primary mb-4">
+          <h2 className="text-2xl sm:text-3xl md:text-4xl font-bold text-primary mb-3 sm:mb-4">
             Featured Dishes
           </h2>
-          <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
             Discover our most beloved dishes, crafted with authentic recipes and premium ingredients
           </p>
         </div>
@@ -99,7 +99,7 @@ const FeaturedDishes = () => {
                 <img
                   src={dish.image}
                   alt={dish.name}
-                  className="w-full h-48 object-cover transition-transform duration-300 group-hover:scale-110"
+                  className="w-full h-40 sm:h-48 object-cover transition-transform duration-300 group-hover:scale-110"
                 />
                 
                 {/* Category Badge */}
@@ -123,7 +123,7 @@ const FeaturedDishes = () => {
                 <Button
                   size="icon"
                   variant="secondary"
-                  className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 h-8 w-8"
+                  className="absolute bottom-3 right-3 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300 h-8 w-8"
                   onClick={() =>
                     addToCart(String(dish.id), 1, {
                       name: dish.name,
@@ -236,10 +236,10 @@ const FeaturedDishes = () => {
         </div>
 
         {/* View Menu CTA */}
-        <div className="text-center mt-12">
+        <div className="text-center mt-10 sm:mt-12">
           
 
-          <Button variant="outline" size="lg" className="group"  onClick={() => navigate('/menu') }>
+          <Button variant="outline" size="lg" className="group w-full sm:w-auto"  onClick={() => navigate('/menu') }>
             View Full Menu
             <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
           </Button>

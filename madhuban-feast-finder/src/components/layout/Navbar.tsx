@@ -63,12 +63,12 @@ const Navbar = () => {
   return (
     <nav className="sticky top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border/50 shadow-sm">
       <div className="w-full mx-auto px-4 lg:px-8">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-16 gap-2">
           
           {/* LOGO */}
-          <Link to="/" className="flex items-center gap-2">
+          <Link to="/" className="flex items-center gap-2 min-w-0">
             <Leaf className="h-6 w-6 text-secondary" />
-            <span className="text-2xl font-bold text-gradient">
+            <span className="text-xl sm:text-2xl font-bold text-gradient truncate">
               Madhu<span className="text-primary">वन</span>
             </span>
           </Link>
@@ -94,7 +94,7 @@ const Navbar = () => {
           </div>
 
           {/* RIGHT ACTIONS */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 shrink-0">
             
             {/* AUTH */}
             {!token ? (
@@ -112,7 +112,7 @@ const Navbar = () => {
                 <button
                   type="button"
                   onClick={() => setOpenProfile((v) => !v)}
-                  className="h-10 w-10 rounded-full border border-border/60 bg-white overflow-hidden flex items-center justify-center"
+                  className="h-9 w-9 sm:h-10 sm:w-10 rounded-full border border-border/60 bg-white overflow-hidden flex items-center justify-center"
                   aria-label="Open profile menu"
                 >
                   {avatar ? (
@@ -123,7 +123,7 @@ const Navbar = () => {
                 </button>
 
                 {openProfile && (
-                  <div className="absolute right-0 mt-2 w-72 rounded-2xl border border-border/60 bg-white shadow-xl p-4 z-50">
+                  <div className="absolute right-0 mt-2 w-72 max-w-[calc(100vw-2rem)] rounded-2xl border border-border/60 bg-white shadow-xl p-4 z-50 sm:w-72">
                     <div className="flex items-center gap-3 pb-4 border-b border-border/60">
                       <div className="h-12 w-12 rounded-full overflow-hidden border border-primary/20 bg-primary/5 flex items-center justify-center">
                         {avatar ? (
@@ -184,9 +184,19 @@ const Navbar = () => {
               </div>
             )}
 
+            {/* MOBILE MENU LINK */}
+            <Button
+              variant="outline"
+              size="sm"
+              className="md:hidden"
+              onClick={() => navigate("/menu")}
+            >
+              Menu
+            </Button>
+
             {/* CART */}
             <Link to="/cart">
-              <Button variant="ghost" size="icon" className="relative">
+              <Button variant="ghost" size="icon" className="relative h-9 w-9 sm:h-10 sm:w-10">
                 <ShoppingCart className="h-5 w-5" />
                 {cartItemsCount > 0 && (
                   <Badge className="absolute -top-2 -right-2 h-5 w-5 text-xs flex items-center justify-center">
