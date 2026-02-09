@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { API_BASE_URL } from "@/lib/api";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate, useLocation, Link } from "react-router-dom";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -12,7 +12,7 @@ const Login = () => {
   // redirect back after login
   const redirectTo = (location.state as any)?.from || "/menu";
 
-  const [email, setEmail] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -27,12 +27,18 @@ const Login = () => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          email: email.trim(),
+          username: username.trim(),
           password: password.trim(),
         }),
       });
 
-      const data = await res.json();
+      const text = await res.text();
+      let data: any = {};
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        data = {};
+      }
 
       if (!res.ok) {
         alert(data.message || "Login failed");
@@ -61,11 +67,11 @@ const Login = () => {
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
             <Input
-              type="email"
-              placeholder="Email"
-              value={email}
+              type="text"
+              placeholder="Username"
+              value={username}
               required
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={(e) => setUsername(e.target.value)}
             />
 
             <Input
@@ -80,6 +86,12 @@ const Login = () => {
               {loading ? "Logging in..." : "Login"}
             </Button>
           </form>
+          <p className="mt-4 text-center text-sm text-muted-foreground">
+            New user?{" "}
+            <Link className="text-primary hover:underline" to="/register">
+              Create an account
+            </Link>
+          </p>
         </CardContent>
       </Card>
     </div>

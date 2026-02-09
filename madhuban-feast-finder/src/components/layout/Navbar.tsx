@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { ShoppingCart, User, Menu, X, Leaf } from "lucide-react";
-import { SignedIn, SignedOut, UserButton } from "@clerk/clerk-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useCart } from "@/hooks/use-cart";
@@ -12,6 +11,7 @@ const Navbar = () => {
   const navigate = useNavigate();
 
   const { count: cartItemsCount } = useCart();
+  const token = localStorage.getItem("token");
 
   const navItems = [
     { name: "Home", path: "/" },
@@ -59,21 +59,30 @@ const Navbar = () => {
           <div className="flex items-center gap-3">
             
             {/* AUTH */}
-            <SignedOut>
+            {!token ? (
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => navigate("/sign-in")}
+                onClick={() => navigate("/login")}
                 className="flex items-center gap-2"
               >
                 <User className="h-4 w-4" />
                 Sign In
               </Button>
-            </SignedOut>
-
-            <SignedIn>
-              <UserButton afterSignOutUrl="/" />
-            </SignedIn>
+            ) : (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  localStorage.removeItem("token");
+                  navigate("/login");
+                }}
+                className="flex items-center gap-2"
+              >
+                <User className="h-4 w-4" />
+                Sign Out
+              </Button>
+            )}
 
             {/* CART */}
             <Link to="/cart">
@@ -113,25 +122,32 @@ const Navbar = () => {
               </Link>
             ))}
 
-            <SignedOut>
+            {!token ? (
               <Button
                 variant="outline"
                 className="w-full mt-3"
                 onClick={() => {
                   setIsMenuOpen(false);
-                  navigate("/sign-in");
+                  navigate("/login");
                 }}
               >
                 <User className="h-4 w-4 mr-2" />
                 Sign In
               </Button>
-            </SignedOut>
-
-            <SignedIn>
-              <div className="flex justify-center mt-3">
-                <UserButton afterSignOutUrl="/" />
-              </div>
-            </SignedIn>
+            ) : (
+              <Button
+                variant="outline"
+                className="w-full mt-3"
+                onClick={() => {
+                  localStorage.removeItem("token");
+                  setIsMenuOpen(false);
+                  navigate("/login");
+                }}
+              >
+                <User className="h-4 w-4 mr-2" />
+                Sign Out
+              </Button>
+            )}
           </div>
         )}
       </div>
