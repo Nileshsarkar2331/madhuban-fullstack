@@ -188,7 +188,7 @@ const Navbar = () => {
             <Button
               variant="outline"
               size="sm"
-              className="md:hidden"
+              className="md:hidden border-primary text-primary hover:bg-primary/5"
               onClick={() => navigate("/menu")}
             >
               Menu

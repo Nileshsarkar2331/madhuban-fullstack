@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 
 import "./App.css";
 import Layout from "./components/layout/Layout";
@@ -20,9 +20,12 @@ import NotFound from "./pages/NotFound";
 const queryClient = new QueryClient();
 
 const AuthGate = ({ children }: { children: React.ReactNode }) => {
+  const location = useLocation();
   const token = localStorage.getItem("token");
   if (!token) {
-    return <Navigate to="/login" replace />;
+    return (
+      <Navigate to="/login" replace state={{ from: location.pathname }} />
+    );
   }
   return <>{children}</>;
 };

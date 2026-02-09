@@ -8,6 +8,13 @@ import mdban3 from "@/assets/mdban3.jpg";
 import mdban4 from "@/assets/mdban4.jpg";
 import mdban5 from "@/assets/mdban5.jpg";
 import mdban6 from "@/assets/mdban6.jpg";
+import mdban7 from "@/assets/mdban7.jpg";
+import mdban8 from "@/assets/mdban8.jpg";
+import mdban9 from "@/assets/mdban9.jpg";
+import mdban10 from "@/assets/mdban10.jpeg";
+import mdban11 from "@/assets/mdban11.jpeg";
+import mdban12 from "@/assets/mdban12.jpg";
+import mdban13 from "@/assets/mdban13.jpg";
 
 const GalleryCarousel = () => {
   const images = useMemo(
@@ -18,6 +25,13 @@ const GalleryCarousel = () => {
       { src: mdban4, alt: "Madhuban night lights" },
       { src: mdban5, alt: "Madhuban pizza night" },
       { src: mdban6, alt: "Madhuban lanterns" },
+      { src: mdban7, alt: "Madhuban gathering" },
+      { src: mdban8, alt: "Madhuban decor" },
+      { src: mdban9, alt: "Madhuban evening vibe" },
+      { src: mdban10, alt: "Madhuban garden view" },
+      { src: mdban11, alt: "Madhuban celebration" },
+      { src: mdban12, alt: "Madhuban outdoor seating" },
+      { src: mdban13, alt: "Madhuban family time" },
     ],
     []
   );

@@ -11,7 +11,7 @@ const Login = () => {
   const location = useLocation();
 
   // redirect back after login
-  const redirectTo = (location.state as any)?.from || "/menu";
+  const redirectTo = (location.state as any)?.from || "/";
 
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
