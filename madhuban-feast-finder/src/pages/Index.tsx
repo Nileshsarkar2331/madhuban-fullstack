@@ -1,12 +1,12 @@
 import React from 'react';
 import HeroSection from '@/components/home/HeroSection';
-import FeaturedDishes from '@/components/home/FeaturedDishes';
+import GalleryCarousel from '@/components/home/GalleryCarousel';
 
 const Index = () => {
   return (
     <div className="min-h-screen bg-background">
       <HeroSection />
-      <FeaturedDishes />
+      <GalleryCarousel />
     </div>
   );
 };

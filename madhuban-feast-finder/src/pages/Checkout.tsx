@@ -48,6 +48,7 @@ const Checkout = () => {
   const [errors, setErrors] = useState<{ phone?: string; altPhone?: string }>(
     {}
   );
+  const [paymentMethod, setPaymentMethod] = useState("cod");
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
@@ -144,6 +145,15 @@ const Checkout = () => {
     setEditMode(false);
     setAddingNew(false);
     setShowSelector(false);
+  };
+
+  const handlePlaceOrder = () => {
+    if (!details.name || !details.addressLine1 || !details.phone) {
+      setEditMode(true);
+      setShowSelector(true);
+      return;
+    }
+    navigate("/thank-you");
   };
 
   return (
@@ -398,37 +408,60 @@ const Checkout = () => {
           </CardContent>
         </Card>
 
-        <Card className="card-restaurant h-fit">
-          <CardHeader>
-            <CardTitle>Order Summary</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center justify-between text-sm">
-              <span>Items</span>
-              <span>₹{grandTotal}</span>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span>Delivery</span>
-              <span>{deliveryFee === 0 ? "Free" : `₹${deliveryFee}`}</span>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span>GST (5%)</span>
-              <span>₹{gst}</span>
-            </div>
-            <div className="flex items-center justify-between text-lg font-semibold pt-2">
-              <span>Order Total</span>
-              <span>₹{orderTotal}</span>
-            </div>
-            {grandTotal < freeDeliveryThreshold && (
-              <div className="text-sm text-muted-foreground">
-                Add ₹{freeDeliveryThreshold - grandTotal} more for free delivery.
+        <div className="space-y-6">
+          <Card className="card-restaurant">
+            <CardHeader>
+              <CardTitle>Payment Method</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <label className="flex items-center gap-2 text-sm">
+                <input
+                  type="radio"
+                  name="payment"
+                  checked={paymentMethod === "cod"}
+                  onChange={() => setPaymentMethod("cod")}
+                />
+                Cash on Delivery
+              </label>
+            </CardContent>
+          </Card>
+
+          <Card className="card-restaurant h-fit">
+            <CardHeader>
+              <CardTitle>Order Summary</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="flex items-center justify-between text-sm">
+                <span>Items</span>
+                <span>₹{grandTotal}</span>
               </div>
-            )}
-            <Button className="w-full" disabled={editMode || cartItems.length === 0}>
-              Place Order
-            </Button>
-          </CardContent>
-        </Card>
+              <div className="flex items-center justify-between text-sm">
+                <span>Delivery</span>
+                <span>{deliveryFee === 0 ? "Free" : `₹${deliveryFee}`}</span>
+              </div>
+              <div className="flex items-center justify-between text-sm">
+                <span>GST (5%)</span>
+                <span>₹{gst}</span>
+              </div>
+              <div className="flex items-center justify-between text-lg font-semibold pt-2">
+                <span>Order Total</span>
+                <span>₹{orderTotal}</span>
+              </div>
+              {grandTotal < freeDeliveryThreshold && (
+                <div className="text-sm text-muted-foreground">
+                  Add ₹{freeDeliveryThreshold - grandTotal} more for free delivery.
+                </div>
+              )}
+              <Button
+                className="w-full"
+                disabled={editMode || cartItems.length === 0}
+                onClick={handlePlaceOrder}
+              >
+                Place Order
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   );
