@@ -55,22 +55,36 @@ const App = () => (
 
       <Routes>
         {/* MAIN APP */}
-        <Route
-          path="/"
-          element={
-            <AuthGate>
-              <Layout />
-            </AuthGate>
-          }
-        >
+        <Route path="/" element={<Layout />}>
           <Route index element={<Index />} />
           <Route path="menu" element={<Menu />} />
           <Route path="menu/:category" element={<Menu />} />
           <Route path="about" element={<About />} />
           <Route path="contact" element={<Contact />} />
-          <Route path="cart" element={<Cart />} />
-          <Route path="checkout" element={<Checkout />} />
-          <Route path="thank-you" element={<ThankYou />} />
+          <Route
+            path="cart"
+            element={
+              <AuthGate>
+                <Cart />
+              </AuthGate>
+            }
+          />
+          <Route
+            path="checkout"
+            element={
+              <AuthGate>
+                <Checkout />
+              </AuthGate>
+            }
+          />
+          <Route
+            path="thank-you"
+            element={
+              <AuthGate>
+                <ThankYou />
+              </AuthGate>
+            }
+          />
         </Route>
 
         {/* AUTH ROUTE */}

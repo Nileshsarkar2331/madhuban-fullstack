@@ -11,8 +11,12 @@ const Navbar = () => {
   const navigate = useNavigate();
 
   const { count: cartItemsCount } = useCart();
-  const token = localStorage.getItem("token");
-  const isAdmin = localStorage.getItem("isAdmin") === "true";
+  const [token, setToken] = useState<string | null>(
+    localStorage.getItem("token")
+  );
+  const [isAdmin, setIsAdmin] = useState(
+    localStorage.getItem("isAdmin") === "true"
+  );
   const [username, setUsername] = useState(
     localStorage.getItem("username") || "Account"
   );
@@ -28,6 +32,26 @@ const Navbar = () => {
     const stored = localStorage.getItem("username");
     if (stored) setUsername(stored);
   }, []);
+  useEffect(() => {
+    const syncAuth = () => {
+      setToken(localStorage.getItem("token"));
+      setIsAdmin(localStorage.getItem("isAdmin") === "true");
+      const stored = localStorage.getItem("username");
+      if (stored) setUsername(stored);
+    };
+    syncAuth();
+    window.addEventListener("storage", syncAuth);
+    window.addEventListener("focus", syncAuth);
+    return () => {
+      window.removeEventListener("storage", syncAuth);
+      window.removeEventListener("focus", syncAuth);
+    };
+  }, []);
+
+  useEffect(() => {
+    setToken(localStorage.getItem("token"));
+    setIsAdmin(localStorage.getItem("isAdmin") === "true");
+  }, [location.pathname]);
 
   useEffect(() => {
     const onDocClick = (e: MouseEvent) => {

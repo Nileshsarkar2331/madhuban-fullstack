@@ -181,10 +181,10 @@ const Admin = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#f5f1ea] via-[#f8f5ef] to-[#f0f6ef]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
         <div className="grid lg:grid-cols-[260px_1fr] gap-6">
           <aside className="rounded-3xl bg-[#3f3a33] text-white shadow-xl overflow-hidden">
-            <div className="px-6 py-6 border-b border-white/10">
+            <div className="px-5 sm:px-6 py-5 sm:py-6 border-b border-white/10">
               <div className="flex items-center gap-3">
                 <div className="h-10 w-10 rounded-2xl bg-[#f28b5b] flex items-center justify-center shadow-lg">
                   <ChefHat className="h-5 w-5" />
@@ -198,38 +198,40 @@ const Admin = () => {
               </div>
             </div>
 
-            <div className="px-4 py-6 space-y-2">
-              {[
-                { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-                { id: "menu", label: "Product", icon: Package },
-                { id: "orders", label: "Order List", icon: ShoppingBag },
-                { id: "stats", label: "Statistics", icon: BarChart3 },
-                { id: "messages", label: "Messages", icon: MessageSquare },
-                { id: "reviews", label: "Reviews", icon: Star },
-                { id: "account", label: "Account", icon: User },
-              ].map((item) => {
-                const Icon = item.icon;
-                const isActive = active === item.id;
-                return (
-                  <button
-                    key={item.id}
-                    type="button"
-                    onClick={() => setActive(item.id as AdminSection)}
-                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium transition ${
-                      isActive
-                        ? "bg-[#f28b5b] text-white shadow-md"
-                        : "text-white/70 hover:bg-white/10"
-                    }`}
-                  >
-                    <Icon className="h-4 w-4" />
-                    {item.label}
-                  </button>
-                );
-              })}
+            <div className="px-3 sm:px-4 py-4 sm:py-6">
+              <div className="flex lg:block gap-2 overflow-x-auto pb-2 lg:pb-0">
+                {[
+                  { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+                  { id: "menu", label: "Product", icon: Package },
+                  { id: "orders", label: "Order List", icon: ShoppingBag },
+                  { id: "stats", label: "Statistics", icon: BarChart3 },
+                  { id: "messages", label: "Messages", icon: MessageSquare },
+                  { id: "reviews", label: "Reviews", icon: Star },
+                  { id: "account", label: "Account", icon: User },
+                ].map((item) => {
+                  const Icon = item.icon;
+                  const isActive = active === item.id;
+                  return (
+                    <button
+                      key={item.id}
+                      type="button"
+                      onClick={() => setActive(item.id as AdminSection)}
+                      className={`shrink-0 lg:w-full flex items-center gap-2 sm:gap-3 px-4 py-2.5 lg:py-3 rounded-2xl text-sm font-medium transition ${
+                        isActive
+                          ? "bg-[#f28b5b] text-white shadow-md"
+                          : "text-white/70 hover:bg-white/10"
+                      }`}
+                    >
+                      <Icon className="h-4 w-4" />
+                      {item.label}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
           </aside>
 
-          <main className="rounded-3xl bg-white shadow-xl border border-border/60 p-6 sm:p-8">
+          <main className="rounded-3xl bg-white shadow-xl border border-border/60 p-5 sm:p-8">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-sm font-medium text-secondary">Admin Panel</p>
@@ -289,7 +291,7 @@ const Admin = () => {
                     </div>
                   )}
                   {stats.length > 0 && (
-                    <div className="mt-4 h-64">
+                    <div className="mt-4 h-64 sm:h-72">
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={stats}>
                           <CartesianGrid strokeDasharray="3 3" />
