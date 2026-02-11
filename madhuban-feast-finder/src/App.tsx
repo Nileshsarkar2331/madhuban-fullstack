@@ -16,6 +16,7 @@ import Register from "./pages/Register";
 import Checkout from "./pages/Checkout";
 import ThankYou from "./pages/ThankYou";
 import NotFound from "./pages/NotFound";
+import Admin from "./pages/Admin";
 
 const queryClient = new QueryClient();
 
@@ -26,6 +27,21 @@ const AuthGate = ({ children }: { children: React.ReactNode }) => {
     return (
       <Navigate to="/login" replace state={{ from: location.pathname }} />
     );
+  }
+  return <>{children}</>;
+};
+
+const AdminGate = ({ children }: { children: React.ReactNode }) => {
+  const location = useLocation();
+  const token = localStorage.getItem("token");
+  const isAdmin = localStorage.getItem("isAdmin") === "true";
+  if (!token) {
+    return (
+      <Navigate to="/login" replace state={{ from: location.pathname }} />
+    );
+  }
+  if (!isAdmin) {
+    return <Navigate to="/" replace />;
   }
   return <>{children}</>;
 };
@@ -59,6 +75,14 @@ const App = () => (
         {/* AUTH ROUTE */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route
+          path="/admin"
+          element={
+            <AdminGate>
+              <Admin />
+            </AdminGate>
+          }
+        />
 
         {/* CATCH ALL */}
         <Route path="*" element={<NotFound />} />

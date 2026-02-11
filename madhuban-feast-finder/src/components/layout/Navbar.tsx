@@ -12,6 +12,7 @@ const Navbar = () => {
 
   const { count: cartItemsCount } = useCart();
   const token = localStorage.getItem("token");
+  const isAdmin = localStorage.getItem("isAdmin") === "true";
   const [username, setUsername] = useState(
     localStorage.getItem("username") || "Account"
   );
@@ -57,6 +58,9 @@ const Navbar = () => {
     { name: "About Us", path: "/about" },
     { name: "Contact", path: "/contact" },
   ];
+  if (isAdmin) {
+    navItems.push({ name: "Admin", path: "/admin" });
+  }
 
   const isActivePage = (path: string) => location.pathname === path;
 
@@ -171,6 +175,7 @@ const Navbar = () => {
                         onClick={() => {
                           localStorage.removeItem("token");
                           localStorage.removeItem("username");
+                          localStorage.removeItem("isAdmin");
                           setOpenProfile(false);
                           navigate("/login");
                         }}
@@ -251,6 +256,7 @@ const Navbar = () => {
                 onClick={() => {
                   localStorage.removeItem("token");
                   localStorage.removeItem("username");
+                  localStorage.removeItem("isAdmin");
                   setIsMenuOpen(false);
                   navigate("/login");
                 }}

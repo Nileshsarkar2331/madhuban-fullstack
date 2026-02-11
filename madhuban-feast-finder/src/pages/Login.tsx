@@ -52,10 +52,12 @@ const Login = () => {
       if (savedUsername) {
         localStorage.setItem("username", savedUsername);
       }
+      const isAdmin = Boolean(data.user?.isAdmin);
+      localStorage.setItem("isAdmin", String(isAdmin));
       sessionStorage.setItem("justLoggedIn", "1");
 
       alert("✅ Login successful");
-      navigate(redirectTo, { replace: true });
+      navigate(isAdmin ? "/admin" : redirectTo, { replace: true });
     } catch (err) {
       console.error(err);
       alert("❌ Server error");
