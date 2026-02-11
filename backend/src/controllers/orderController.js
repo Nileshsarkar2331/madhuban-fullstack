@@ -58,6 +58,9 @@ exports.listMyOrders = async (req, res) => {
     }
 
     const userId = req.user?.id || "";
+    if (!userId) {
+      return res.status(200).json({ orders: [] });
+    }
     const orders = await Order.find({ userId })
       .sort({ createdAt: -1 })
       .lean();
