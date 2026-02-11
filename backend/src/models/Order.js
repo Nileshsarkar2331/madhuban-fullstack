@@ -39,6 +39,7 @@ const totalsSchema = new mongoose.Schema(
 
 const orderSchema = new mongoose.Schema(
   {
+    userId: { type: String, default: "" },
     customerName: { type: String, default: "" },
     customerUsername: { type: String, default: "" },
     address: { type: addressSchema, required: true },

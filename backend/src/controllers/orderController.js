@@ -19,6 +19,7 @@ exports.createOrder = async (req, res) => {
     }
 
     const order = await Order.create({
+      userId: req.user?.id || "",
       address,
       items,
       totals,
@@ -42,6 +43,52 @@ exports.listOrders = async (req, res) => {
 
     const orders = await Order.find().sort({ createdAt: -1 }).lean();
     return res.status(200).json({ orders });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.listMyOrders = async (req, res) => {
+  try {
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({ message: "Database not connected" });
+    }
+
+    const userId = req.user?.id || "";
+    const orders = await Order.find({ userId })
+      .sort({ createdAt: -1 })
+      .lean();
+    return res.status(200).json({ orders });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.updateOrderStatus = async (req, res) => {
+  try {
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({ message: "Database not connected" });
+    }
+
+    const { id } = req.params;
+    const { status } = req.body || {};
+    const allowed = new Set(["placed", "prepared", "delivered"]);
+    if (!allowed.has(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+
+    const order = await Order.findByIdAndUpdate(
+      id,
+      { status },
+      { new: true }
+    );
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    return res.status(200).json({ message: "Status updated", order });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Server error" });
