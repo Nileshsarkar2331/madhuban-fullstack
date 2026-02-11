@@ -5,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useCart } from "@/hooks/use-cart";
+import { clearCart } from "@/lib/cart";
+import { API_BASE_URL } from "@/lib/api";
 
 type DeliveryDetails = {
   id: string;
@@ -49,6 +51,7 @@ const Checkout = () => {
     {}
   );
   const [paymentMethod, setPaymentMethod] = useState("cod");
+  const [placingOrder, setPlacingOrder] = useState(false);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
@@ -147,13 +150,58 @@ const Checkout = () => {
     setShowSelector(false);
   };
 
-  const handlePlaceOrder = () => {
+  const handlePlaceOrder = async () => {
     if (!details.name || !details.addressLine1 || !details.phone) {
       setEditMode(true);
       setShowSelector(true);
       return;
     }
-    navigate("/thank-you");
+    setPlacingOrder(true);
+    try {
+      const token = localStorage.getItem("token");
+      const payload = {
+        address: details,
+        items: cartItems,
+        totals: {
+          itemsTotal: grandTotal,
+          deliveryFee,
+          gst,
+          orderTotal,
+        },
+        paymentMethod,
+        customerName: details.name,
+        customerUsername: localStorage.getItem("username") || "",
+      };
+
+      const res = await fetch(`${API_BASE_URL}/api/orders`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        let data: any = {};
+        try {
+          data = text ? JSON.parse(text) : {};
+        } catch {
+          data = {};
+        }
+        alert(data.message || "Failed to place order");
+        return;
+      }
+
+      clearCart();
+      navigate("/thank-you");
+    } catch (error) {
+      console.error(error);
+      alert("❌ Server error");
+    } finally {
+      setPlacingOrder(false);
+    }
   };
 
   return (
@@ -454,10 +502,10 @@ const Checkout = () => {
               )}
               <Button
                 className="w-full"
-                disabled={editMode || cartItems.length === 0}
+                disabled={editMode || cartItems.length === 0 || placingOrder}
                 onClick={handlePlaceOrder}
               >
-                Place Order
+                {placingOrder ? "Placing..." : "Place Order"}
               </Button>
             </CardContent>
           </Card>
