@@ -58,6 +58,9 @@ const Navbar = () => {
     { name: "About Us", path: "/about" },
     { name: "Contact", path: "/contact" },
   ];
+  if (token && !isAdmin) {
+    navItems.push({ name: "My Orders", path: "/my-orders" });
+  }
   if (isAdmin) {
     navItems.push({ name: "Admin", path: "/admin" });
   }

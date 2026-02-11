@@ -17,6 +17,7 @@ import Checkout from "./pages/Checkout";
 import ThankYou from "./pages/ThankYou";
 import NotFound from "./pages/NotFound";
 import Admin from "./pages/Admin";
+import MyOrders from "./pages/MyOrders";
 
 const queryClient = new QueryClient();
 
@@ -81,6 +82,14 @@ const App = () => (
             <AdminGate>
               <Admin />
             </AdminGate>
+          }
+        />
+        <Route
+          path="/my-orders"
+          element={
+            <AuthGate>
+              <MyOrders />
+            </AuthGate>
           }
         />
 

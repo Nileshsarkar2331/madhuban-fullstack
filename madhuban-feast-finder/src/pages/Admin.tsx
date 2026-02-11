@@ -1,5 +1,19 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { API_BASE_URL } from "@/lib/api";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+import {
+  BarChart3,
+  ChefHat,
+  LayoutDashboard,
+  MessageSquare,
+  Package,
+  ShoppingBag,
+  Star,
+  User,
+} from "lucide-react";
 
 type Order = {
   _id: string;
@@ -31,10 +45,26 @@ type Order = {
   }>;
 };
 
+type AdminSection =
+  | "dashboard"
+  | "menu"
+  | "orders"
+  | "stats"
+  | "messages"
+  | "reviews"
+  | "account";
+
 const Admin = () => {
+  const [active, setActive] = useState<AdminSection>("dashboard");
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const totalOrders = orders.length;
+  const totalRevenue = useMemo(
+    () =>
+      orders.reduce((sum, order) => sum + (order.totals?.orderTotal || 0), 0),
+    [orders]
+  );
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -70,81 +100,281 @@ const Admin = () => {
     fetchOrders();
   }, []);
 
+  const updateStatus = async (orderId: string, status: "prepared" | "delivered") => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_BASE_URL}/api/orders/${orderId}/status`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ status }),
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        let data: any = {};
+        try {
+          data = text ? JSON.parse(text) : {};
+        } catch {
+          data = {};
+        }
+        throw new Error(data.message || "Failed to update status");
+      }
+      const data = await res.json();
+      setOrders((prev) =>
+        prev.map((order) => (order._id === orderId ? data.order : order))
+      );
+    } catch (err: any) {
+      alert(err?.message || "Failed to update status");
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background via-background to-secondary/5">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        <div className="rounded-3xl border border-border/60 bg-white shadow-xl p-6 sm:p-10">
-          <div className="flex items-center justify-between gap-4">
-            <div>
-              <p className="text-sm font-medium text-secondary">Admin Panel</p>
-              <h1 className="text-2xl sm:text-3xl font-bold text-primary">
-                Dashboard
-              </h1>
-            </div>
-          </div>
-
-          <div className="mt-8">
-            <div className="text-lg font-semibold">Recent Orders</div>
-            {loading && (
-              <div className="mt-4 text-sm text-muted-foreground">
-                Loading orders...
-              </div>
-            )}
-            {error && (
-              <div className="mt-4 text-sm text-red-500">{error}</div>
-            )}
-            {!loading && !error && orders.length === 0 && (
-              <div className="mt-4 text-sm text-muted-foreground">
-                No orders yet.
-              </div>
-            )}
-
-            <div className="mt-4 grid grid-cols-1 gap-4">
-              {orders.map((order) => (
-                <div
-                  key={order._id}
-                  className="rounded-2xl border border-border/60 p-5"
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="font-semibold">
-                      {order.address?.name || order.customerName || "Customer"}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      {new Date(order.createdAt).toLocaleString()}
-                    </div>
-                  </div>
-                  <div className="mt-2 text-sm text-muted-foreground">
-                    Phone: {order.address?.phone}
-                    {order.address?.altPhone
-                      ? ` | Alt: ${order.address.altPhone}`
-                      : ""}
-                  </div>
-                  <div className="mt-1 text-sm text-muted-foreground">
-                    Address: {order.address?.addressLine1}
-                    {order.address?.addressLine2
-                      ? `, ${order.address.addressLine2}`
-                      : ""}
-                    {order.address?.landmark
-                      ? `, ${order.address.landmark}`
-                      : ""}
-                    {order.address?.city ? `, ${order.address.city}` : ""}
-                    {order.address?.state ? `, ${order.address.state}` : ""}
-                    {order.address?.pincode
-                      ? ` - ${order.address.pincode}`
-                      : ""}
-                  </div>
-                  {order.address?.instructions && (
-                    <div className="mt-1 text-sm text-muted-foreground">
-                      Instructions: {order.address.instructions}
-                    </div>
-                  )}
-                  <div className="mt-3 text-sm">
-                    Total: ₹{order.totals?.orderTotal ?? 0}
+    <div className="min-h-screen bg-gradient-to-br from-[#f5f1ea] via-[#f8f5ef] to-[#f0f6ef]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <div className="grid lg:grid-cols-[260px_1fr] gap-6">
+          <aside className="rounded-3xl bg-[#3f3a33] text-white shadow-xl overflow-hidden">
+            <div className="px-6 py-6 border-b border-white/10">
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-2xl bg-[#f28b5b] flex items-center justify-center shadow-lg">
+                  <ChefHat className="h-5 w-5" />
+                </div>
+                <div>
+                  <div className="text-lg font-semibold">Madhuban</div>
+                  <div className="text-xs text-white/60">
+                    Serving Delicious Food
                   </div>
                 </div>
-              ))}
+              </div>
             </div>
-          </div>
+
+            <div className="px-4 py-6 space-y-2">
+              {[
+                { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+                { id: "menu", label: "Product", icon: Package },
+                { id: "orders", label: "Order List", icon: ShoppingBag },
+                { id: "stats", label: "Statistics", icon: BarChart3 },
+                { id: "messages", label: "Messages", icon: MessageSquare },
+                { id: "reviews", label: "Reviews", icon: Star },
+                { id: "account", label: "Account", icon: User },
+              ].map((item) => {
+                const Icon = item.icon;
+                const isActive = active === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    type="button"
+                    onClick={() => setActive(item.id as AdminSection)}
+                    className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-medium transition ${
+                      isActive
+                        ? "bg-[#f28b5b] text-white shadow-md"
+                        : "text-white/70 hover:bg-white/10"
+                    }`}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {item.label}
+                  </button>
+                );
+              })}
+            </div>
+          </aside>
+
+          <main className="rounded-3xl bg-white shadow-xl border border-border/60 p-6 sm:p-8">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-medium text-secondary">Admin Panel</p>
+                <h1 className="text-2xl sm:text-3xl font-bold text-primary">
+                  {active === "menu"
+                    ? "Menu Manager"
+                    : active === "orders"
+                    ? "Order List"
+                    : "Dashboard"}
+                </h1>
+              </div>
+              <Badge className="bg-primary/10 text-primary border border-primary/20">
+                {totalOrders} Orders
+              </Badge>
+            </div>
+
+            {active === "dashboard" && (
+              <div className="mt-8 grid md:grid-cols-3 gap-4">
+                <div className="rounded-2xl border border-border/60 p-5">
+                  <div className="text-sm text-muted-foreground">
+                    Total Orders
+                  </div>
+                  <div className="text-2xl font-semibold">{totalOrders}</div>
+                </div>
+                <div className="rounded-2xl border border-border/60 p-5">
+                  <div className="text-sm text-muted-foreground">
+                    Revenue
+                  </div>
+                  <div className="text-2xl font-semibold">₹{totalRevenue}</div>
+                </div>
+                <div className="rounded-2xl border border-border/60 p-5">
+                  <div className="text-sm text-muted-foreground">
+                    Delivery
+                  </div>
+                  <div className="text-2xl font-semibold">COD</div>
+                </div>
+              </div>
+            )}
+
+            {active === "menu" && (
+              <div className="mt-8 grid lg:grid-cols-[1.1fr_0.9fr] gap-6">
+                <div className="rounded-2xl border border-border/60 p-5">
+                  <div className="font-semibold">Add New Menu Item</div>
+                  <div className="mt-4 grid gap-3">
+                    <Input placeholder="Dish name" />
+                    <Input placeholder="Category (e.g. starters)" />
+                    <Input placeholder="Price" type="number" />
+                    <Textarea placeholder="Short description" />
+                    <Input placeholder="Image URL" />
+                    <div className="flex gap-2">
+                      <Button className="bg-primary text-primary-foreground">
+                        Save Item
+                      </Button>
+                      <Button variant="outline">Reset</Button>
+                    </div>
+                  </div>
+                </div>
+                <div className="rounded-2xl border border-border/60 p-5">
+                  <div className="font-semibold">Quick Controls</div>
+                  <div className="mt-4 space-y-3 text-sm text-muted-foreground">
+                    <div className="flex items-center justify-between">
+                      <span>Show item in menu</span>
+                      <input type="checkbox" defaultChecked />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Mark as popular</span>
+                      <input type="checkbox" />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span>Enable online order</span>
+                      <input type="checkbox" defaultChecked />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {active === "orders" && (
+              <div className="mt-8">
+                <div className="text-lg font-semibold">Recent Orders</div>
+                {loading && (
+                  <div className="mt-4 text-sm text-muted-foreground">
+                    Loading orders...
+                  </div>
+                )}
+                {error && (
+                  <div className="mt-4 text-sm text-red-500">{error}</div>
+                )}
+                {!loading && !error && orders.length === 0 && (
+                  <div className="mt-4 text-sm text-muted-foreground">
+                    No orders yet.
+                  </div>
+                )}
+
+                <div className="mt-4 grid grid-cols-1 gap-4">
+                  {orders.map((order) => (
+                    <div
+                      key={order._id}
+                      className="rounded-2xl border border-border/60 p-5"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="font-semibold">
+                          {order.address?.name ||
+                            order.customerName ||
+                            "Customer"}
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {new Date(order.createdAt).toLocaleString()}
+                        </div>
+                      </div>
+                      <div className="mt-2 text-sm text-muted-foreground">
+                        Phone: {order.address?.phone}
+                        {order.address?.altPhone
+                          ? ` | Alt: ${order.address.altPhone}`
+                          : ""}
+                      </div>
+                      <div className="mt-1 text-sm text-muted-foreground">
+                        Address: {order.address?.addressLine1}
+                        {order.address?.addressLine2
+                          ? `, ${order.address.addressLine2}`
+                          : ""}
+                        {order.address?.landmark
+                          ? `, ${order.address.landmark}`
+                          : ""}
+                        {order.address?.city ? `, ${order.address.city}` : ""}
+                        {order.address?.state ? `, ${order.address.state}` : ""}
+                        {order.address?.pincode
+                          ? ` - ${order.address.pincode}`
+                          : ""}
+                      </div>
+                      {order.address?.instructions && (
+                        <div className="mt-1 text-sm text-muted-foreground">
+                          Instructions: {order.address.instructions}
+                        </div>
+                      )}
+                    <div className="mt-3 text-sm">
+                      Total: ₹{order.totals?.orderTotal ?? 0}
+                    </div>
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <Badge className="bg-secondary/10 text-secondary border border-secondary/20">
+                        {order.status || "placed"}
+                      </Badge>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => updateStatus(order._id, "prepared")}
+                      >
+                        Prepared
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => updateStatus(order._id, "delivered")}
+                      >
+                        Delivered
+                      </Button>
+                    </div>
+                      {order.items && order.items.length > 0 && (
+                        <div className="mt-3 text-sm">
+                          <div className="font-medium text-foreground">
+                            Ordered Items
+                          </div>
+                          <div className="mt-2 space-y-1">
+                            {order.items.map((item, idx) => (
+                              <div
+                                key={`${order._id}-${item.dishId}-${idx}`}
+                                className="flex items-center justify-between text-muted-foreground"
+                              >
+                                <span>
+                                  {item.name || item.dishId} ×{" "}
+                                  {item.quantity ?? 1}
+                                </span>
+                                <span>
+                                  ₹{(item.price || 0) * (item.quantity ?? 1)}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {active !== "dashboard" &&
+              active !== "menu" &&
+              active !== "orders" && (
+                <div className="mt-8 text-sm text-muted-foreground">
+                  This section is ready for your data.
+                </div>
+              )}
+          </main>
         </div>
       </div>
     </div>
