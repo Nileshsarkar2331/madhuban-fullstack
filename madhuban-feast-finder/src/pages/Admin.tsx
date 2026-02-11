@@ -14,6 +14,15 @@ import {
   Star,
   User,
 } from "lucide-react";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 type Order = {
   _id: string;
@@ -59,6 +68,8 @@ const Admin = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [stats, setStats] = useState<Array<{ date: string; orders: number; revenue: number }>>([]);
+  const [statsError, setStatsError] = useState("");
   const totalOrders = orders.length;
   const totalRevenue = useMemo(
     () =>
@@ -100,6 +111,42 @@ const Admin = () => {
     fetchOrders();
   }, []);
 
+  useEffect(() => {
+    const fetchStats = async () => {
+      setStatsError("");
+      try {
+        const token = localStorage.getItem("token");
+        const now = new Date();
+        const month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(
+          2,
+          "0"
+        )}`;
+        const res = await fetch(`${API_BASE_URL}/api/orders/stats?month=${month}`, {
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        });
+        if (!res.ok) {
+          const text = await res.text();
+          let data: any = {};
+          try {
+            data = text ? JSON.parse(text) : {};
+          } catch {
+            data = {};
+          }
+          throw new Error(data.message || "Failed to load stats");
+        }
+        const data = await res.json();
+        setStats(Array.isArray(data.stats) ? data.stats : []);
+      } catch (err: any) {
+        setStatsError(err?.message || "Failed to load stats");
+      }
+    };
+
+    fetchStats();
+  }, []);
+
   const updateStatus = async (orderId: string, status: "prepared" | "delivered") => {
     try {
       const token = localStorage.getItem("token");
@@ -123,7 +170,9 @@ const Admin = () => {
       }
       const data = await res.json();
       setOrders((prev) =>
-        prev.map((order) => (order._id === orderId ? data.order : order))
+        status === "delivered"
+          ? prev.filter((order) => order._id !== orderId)
+          : prev.map((order) => (order._id === orderId ? data.order : order))
       );
     } catch (err: any) {
       alert(err?.message || "Failed to update status");
@@ -198,24 +247,61 @@ const Admin = () => {
             </div>
 
             {active === "dashboard" && (
-              <div className="mt-8 grid md:grid-cols-3 gap-4">
-                <div className="rounded-2xl border border-border/60 p-5">
-                  <div className="text-sm text-muted-foreground">
-                    Total Orders
+              <div className="mt-8 space-y-6">
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div className="rounded-2xl border border-border/60 p-5">
+                    <div className="text-sm text-muted-foreground">
+                      Total Orders
+                    </div>
+                    <div className="text-2xl font-semibold">{totalOrders}</div>
                   </div>
-                  <div className="text-2xl font-semibold">{totalOrders}</div>
+                  <div className="rounded-2xl border border-border/60 p-5">
+                    <div className="text-sm text-muted-foreground">
+                      Revenue
+                    </div>
+                    <div className="text-2xl font-semibold">₹{totalRevenue}</div>
+                  </div>
+                  <div className="rounded-2xl border border-border/60 p-5">
+                    <div className="text-sm text-muted-foreground">
+                      Delivery
+                    </div>
+                    <div className="text-2xl font-semibold">COD</div>
+                  </div>
                 </div>
+
                 <div className="rounded-2xl border border-border/60 p-5">
-                  <div className="text-sm text-muted-foreground">
-                    Revenue
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <div className="text-sm text-muted-foreground">
+                        Daily Orders & Revenue
+                      </div>
+                      <div className="text-lg font-semibold">This Month</div>
+                    </div>
                   </div>
-                  <div className="text-2xl font-semibold">₹{totalRevenue}</div>
-                </div>
-                <div className="rounded-2xl border border-border/60 p-5">
-                  <div className="text-sm text-muted-foreground">
-                    Delivery
-                  </div>
-                  <div className="text-2xl font-semibold">COD</div>
+                  {statsError && (
+                    <div className="mt-3 text-sm text-red-500">
+                      {statsError}
+                    </div>
+                  )}
+                  {!statsError && stats.length === 0 && (
+                    <div className="mt-3 text-sm text-muted-foreground">
+                      No data yet.
+                    </div>
+                  )}
+                  {stats.length > 0 && (
+                    <div className="mt-4 h-64">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={stats}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                          <YAxis tick={{ fontSize: 11 }} />
+                          <Tooltip />
+                          <Bar dataKey="orders" fill="#2f7a45" name="Orders" />
+                          <Bar dataKey="revenue" fill="#f28b5b" name="Revenue" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
                 </div>
               </div>
             )}

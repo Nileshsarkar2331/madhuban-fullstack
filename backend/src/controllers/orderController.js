@@ -41,7 +41,9 @@ exports.listOrders = async (req, res) => {
       return res.status(503).json({ message: "Database not connected" });
     }
 
-    const orders = await Order.find().sort({ createdAt: -1 }).lean();
+    const orders = await Order.find({ status: { $ne: "delivered" } })
+      .sort({ createdAt: -1 })
+      .lean();
     return res.status(200).json({ orders });
   } catch (error) {
     console.error(error);
@@ -89,6 +91,56 @@ exports.updateOrderStatus = async (req, res) => {
     }
 
     return res.status(200).json({ message: "Status updated", order });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.getMonthlyStats = async (req, res) => {
+  try {
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({ message: "Database not connected" });
+    }
+
+    const monthParam = String(req.query.month || "");
+    let year = new Date().getFullYear();
+    let monthIndex = new Date().getMonth();
+    if (/^\d{4}-\d{2}$/.test(monthParam)) {
+      const [y, m] = monthParam.split("-").map(Number);
+      year = y;
+      monthIndex = m - 1;
+    }
+
+    const start = new Date(Date.UTC(year, monthIndex, 1, 0, 0, 0));
+    const end = new Date(Date.UTC(year, monthIndex + 1, 1, 0, 0, 0));
+
+    const stats = await Order.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: start, $lt: end },
+        },
+      },
+      {
+        $group: {
+          _id: {
+            $dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
+          },
+          orders: { $sum: 1 },
+          revenue: { $sum: "$totals.orderTotal" },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
+
+    return res.status(200).json({
+      month: `${year}-${String(monthIndex + 1).padStart(2, "0")}`,
+      stats: stats.map((row) => ({
+        date: row._id,
+        orders: row.orders || 0,
+        revenue: row.revenue || 0,
+      })),
+    });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Server error" });
