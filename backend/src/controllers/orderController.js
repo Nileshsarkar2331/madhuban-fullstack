@@ -41,7 +41,7 @@ exports.listOrders = async (req, res) => {
       return res.status(503).json({ message: "Database not connected" });
     }
 
-    const orders = await Order.find({ status: { $ne: "delivered" } })
+    const orders = await Order.find({ status: { $nin: ["delivered", "canceled"] } })
       .sort({ createdAt: -1 })
       .lean();
     return res.status(200).json({ orders });
@@ -76,7 +76,7 @@ exports.updateOrderStatus = async (req, res) => {
 
     const { id } = req.params;
     const { status } = req.body || {};
-    const allowed = new Set(["placed", "prepared", "delivered"]);
+    const allowed = new Set(["placed", "prepared", "delivered", "canceled"]);
     if (!allowed.has(status)) {
       return res.status(400).json({ message: "Invalid status" });
     }
@@ -141,6 +141,37 @@ exports.getMonthlyStats = async (req, res) => {
         revenue: row.revenue || 0,
       })),
     });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.cancelMyOrder = async (req, res) => {
+  try {
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({ message: "Database not connected" });
+    }
+
+    const { id } = req.params;
+    const userId = req.user?.id || "";
+
+    const order = await Order.findOne({ _id: id, userId });
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
+    }
+
+    if (order.status !== "placed") {
+      return res.status(400).json({
+        message:
+          "Sorry, order can't be canceled because it is already prepared.",
+      });
+    }
+
+    order.status = "canceled";
+    await order.save();
+
+    return res.status(200).json({ message: "Order canceled", order });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Server error" });

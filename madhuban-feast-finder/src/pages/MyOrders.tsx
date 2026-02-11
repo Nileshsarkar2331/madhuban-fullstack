@@ -31,6 +31,7 @@ const MyOrders = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [actionLoading, setActionLoading] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -65,6 +66,41 @@ const MyOrders = () => {
 
     fetchOrders();
   }, []);
+
+  const cancelOrder = async (orderId: string) => {
+    const confirmed = window.confirm(
+      "Are you sure you want to cancel this order?"
+    );
+    if (!confirmed) return;
+
+    setActionLoading(orderId);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_BASE_URL}/api/orders/my/${orderId}/cancel`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+      const text = await res.text();
+      let data: any = {};
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        data = {};
+      }
+      if (!res.ok) {
+        alert(data.message || "Unable to cancel order");
+        return;
+      }
+      setOrders((prev) => prev.filter((order) => order._id !== orderId));
+    } catch (err: any) {
+      alert(err?.message || "Unable to cancel order");
+    } finally {
+      setActionLoading(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background via-background to-secondary/5 px-4 py-12 max-w-6xl mx-auto">
@@ -109,6 +145,22 @@ const MyOrders = () => {
               {order.address?.pincode ? ` - ${order.address.pincode}` : ""}
             </div>
             <div className="mt-3 text-sm">Total: ₹{order.totals?.orderTotal ?? 0}</div>
+            {order.status === "placed" ? (
+              <div className="mt-3">
+                <button
+                  type="button"
+                  className="text-sm font-medium text-red-600 hover:text-red-700"
+                  onClick={() => cancelOrder(order._id)}
+                  disabled={actionLoading === order._id}
+                >
+                  {actionLoading === order._id ? "Canceling..." : "Cancel Order"}
+                </button>
+              </div>
+            ) : (
+              <div className="mt-3 text-xs text-muted-foreground">
+                Sorry, order can't be canceled because it is already prepared.
+              </div>
+            )}
 
             {order.items && order.items.length > 0 && (
               <div className="mt-3 text-sm">
