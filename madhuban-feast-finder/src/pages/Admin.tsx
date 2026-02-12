@@ -85,6 +85,18 @@ const Admin = () => {
   const [reviewsError, setReviewsError] = useState("");
   const [unseenCount, setUnseenCount] = useState(0);
   const lastSeenRef = useRef<number>(Date.now());
+  const [pushError, setPushError] = useState("");
+
+  const urlBase64ToUint8Array = (base64String: string) => {
+    const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  };
   const totalOrders = orders.length;
   const totalRevenue = useMemo(
     () =>
@@ -138,6 +150,46 @@ const Admin = () => {
     fetchOrders(true);
     const id = window.setInterval(() => fetchOrders(false), 10000);
     return () => window.clearInterval(id);
+  }, []);
+
+  useEffect(() => {
+    const setupPush = async () => {
+      try {
+        if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+          return;
+        }
+        const publicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY as string;
+        if (!publicKey) {
+          return;
+        }
+        const permission = await Notification.requestPermission();
+        if (permission !== "granted") {
+          return;
+        }
+        const reg = await navigator.serviceWorker.register("/sw.js");
+        const existing = await reg.pushManager.getSubscription();
+        const subscription =
+          existing ||
+          (await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(publicKey),
+          }));
+
+        const token = localStorage.getItem("token");
+        await fetch(`${API_BASE_URL}/api/notifications/subscribe`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify(subscription),
+        });
+      } catch (err: any) {
+        setPushError(err?.message || "Failed to enable notifications");
+      }
+    };
+
+    setupPush();
   }, []);
 
   useEffect(() => {
@@ -340,6 +392,11 @@ const Admin = () => {
 
             {active === "dashboard" && (
               <div className="mt-8 space-y-6">
+                {pushError && (
+                  <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-600">
+                    {pushError}
+                  </div>
+                )}
                 <div className="grid md:grid-cols-3 gap-4">
                   <div className="rounded-2xl border border-border/60 p-5">
                     <div className="text-sm text-muted-foreground">

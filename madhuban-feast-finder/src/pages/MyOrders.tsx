@@ -73,7 +73,24 @@ const MyOrders = () => {
     };
 
     fetchOrders();
+    const id = window.setInterval(fetchOrders, 120000);
+    return () => window.clearInterval(id);
   }, []);
+
+  const normalize = (value: string) =>
+    value
+      .toLowerCase()
+      .replace(/[^a-z0-9 ]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  const getEtaMessage = (order: Order) => {
+    if (order.status !== "placed" && order.status !== "prepared") return null;
+    const isSidcul = normalize(order.address?.city || "") === "sidcul";
+    const baseMinutes = order.status === "prepared" ? 25 : 45;
+    const minutes = isSidcul ? baseMinutes + 10 : baseMinutes;
+    return `Your order will be delivered in ${minutes} min`;
+  };
 
   const cancelOrder = async (orderId: string) => {
     const confirmed = window.confirm(
@@ -222,6 +239,11 @@ const MyOrders = () => {
                 {order.status || "placed"}
               </Badge>
             </div>
+            {getEtaMessage(order) && (
+              <div className="mt-2 text-xs text-muted-foreground">
+                {getEtaMessage(order)}
+              </div>
+            )}
             <div className="mt-2 text-sm text-muted-foreground">
               Address: {order.address?.addressLine1}
               {order.address?.addressLine2 ? `, ${order.address.addressLine2}` : ""}
@@ -404,6 +426,11 @@ const MyOrders = () => {
                         {order.status || "placed"}
                       </Badge>
                     </div>
+                    {getEtaMessage(order) && (
+                      <div className="mt-2 text-xs text-muted-foreground">
+                        {getEtaMessage(order)}
+                      </div>
+                    )}
                     <div className="mt-2 text-sm text-muted-foreground">
                       Address: {order.address?.addressLine1}
                       {order.address?.addressLine2

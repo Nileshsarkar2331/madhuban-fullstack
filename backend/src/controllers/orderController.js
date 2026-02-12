@@ -1,6 +1,8 @@
 const mongoose = require("mongoose");
 const Order = require("../models/Order");
 const Review = require("../models/Review");
+const PushSubscription = require("../models/PushSubscription");
+const webpush = require("web-push");
 
 exports.createOrder = async (req, res) => {
   try {
@@ -43,6 +45,37 @@ exports.createOrder = async (req, res) => {
       customerName: customerName || address.name || "",
       customerUsername: customerUsername || "",
     });
+
+    const vapidPublic = process.env.VAPID_PUBLIC_KEY;
+    const vapidPrivate = process.env.VAPID_PRIVATE_KEY;
+    if (vapidPublic && vapidPrivate) {
+      webpush.setVapidDetails(
+        "mailto:admin@madhuban.com",
+        vapidPublic,
+        vapidPrivate
+      );
+      const subs = await PushSubscription.find({ isAdmin: true }).lean();
+      const payload = JSON.stringify({
+        title: "New Order",
+        body: `Order from ${order.address?.name || "Customer"} • ₹${
+          order.totals?.orderTotal || 0
+        }`,
+        url: "/admin",
+      });
+      for (const sub of subs) {
+        try {
+          await webpush.sendNotification(
+            {
+              endpoint: sub.endpoint,
+              keys: sub.keys,
+            },
+            payload
+          );
+        } catch (err) {
+          // ignore failed endpoints
+        }
+      }
+    }
 
     return res.status(201).json({ message: "Order placed", order });
   } catch (error) {

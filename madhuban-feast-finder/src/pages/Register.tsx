@@ -12,11 +12,23 @@ const Register = () => {
   const { toast } = useToast();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
+    const passwordValue = password.trim();
+    const hasLetter = /[A-Za-z]/.test(passwordValue);
+    const hasDigit = /\d/.test(passwordValue);
+    if (passwordValue.length < 6 || !hasLetter || !hasDigit) {
+      setPasswordError("Use strong password (min 6 chars, letters & numbers).");
+      setLoading(false);
+      return;
+    } else {
+      setPasswordError("");
+    }
 
     try {
       const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
@@ -26,7 +38,7 @@ const Register = () => {
         },
         body: JSON.stringify({
           username: username.trim(),
-          password: password.trim(),
+          password: passwordValue,
         }),
       });
 
@@ -95,11 +107,14 @@ const Register = () => {
 
             <Input
               type="password"
-              placeholder="Password"
+              placeholder="Password (min 6, letters & numbers)"
               value={password}
               required
               onChange={(e) => setPassword(e.target.value)}
             />
+            {passwordError && (
+              <p className="text-xs text-red-400">{passwordError}</p>
+            )}
 
             <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Creating..." : "Sign Up"}
