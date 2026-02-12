@@ -7,6 +7,21 @@ exports.createOrder = async (req, res) => {
       return res.status(503).json({ message: "Database not connected" });
     }
 
+    const now = new Date();
+    const IST_OFFSET_MIN = 330;
+    const istNow = new Date(now.getTime() + IST_OFFSET_MIN * 60 * 1000);
+    const minutes = istNow.getUTCHours() * 60 + istNow.getUTCMinutes();
+    const openAt = 11 * 60 + 50;
+    const closeAt = 22 * 60 + 30;
+    if (minutes < openAt) {
+      return res
+        .status(400)
+        .json({ message: "Sorry, we are not open yet." });
+    }
+    if (minutes > closeAt) {
+      return res.status(400).json({ message: "We are closed." });
+    }
+
     const { address, items, totals, paymentMethod, customerName, customerUsername } =
       req.body || {};
 
@@ -175,6 +190,57 @@ exports.cancelMyOrder = async (req, res) => {
     await order.save();
 
     return res.status(200).json({ message: "Order canceled", order });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.getTodayDeliveredStats = async (req, res) => {
+  try {
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({ message: "Database not connected" });
+    }
+
+    const now = new Date();
+    const IST_OFFSET_MIN = 330;
+    const offsetMs = IST_OFFSET_MIN * 60 * 1000;
+    const istNow = new Date(now.getTime() + offsetMs);
+    const istStartUTC = new Date(
+      Date.UTC(
+        istNow.getUTCFullYear(),
+        istNow.getUTCMonth(),
+        istNow.getUTCDate(),
+        0,
+        0,
+        0
+      )
+    );
+    const start = new Date(istStartUTC.getTime() - offsetMs);
+    const end = new Date(start.getTime() + 24 * 60 * 60 * 1000);
+
+    const result = await Order.aggregate([
+      {
+        $match: {
+          status: "delivered",
+          createdAt: { $gte: start, $lt: end },
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          orders: { $sum: 1 },
+          revenue: { $sum: "$totals.orderTotal" },
+        },
+      },
+    ]);
+
+    const stats = result[0] || { orders: 0, revenue: 0 };
+    return res.status(200).json({
+      date: istNow.toISOString().slice(0, 10),
+      orders: stats.orders || 0,
+      revenue: stats.revenue || 0,
+    });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Server error" });

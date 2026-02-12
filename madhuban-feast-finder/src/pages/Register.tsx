@@ -5,9 +5,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { API_BASE_URL } from "@/lib/api";
 import { useNavigate, Link } from "react-router-dom";
 import heroImage from "@/assets/curry-hero.jpg";
+import { useToast } from "@/hooks/use-toast";
 
 const Register = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -36,15 +38,26 @@ const Register = () => {
         data = {};
       }
       if (!res.ok) {
-        alert(data.message || "Registration failed");
+        toast({
+          title: "Registration failed",
+          description: data.message || "Please try again.",
+          variant: "destructive",
+        });
         return;
       }
 
-      alert("✅ Registration successful. Please log in.");
+      toast({
+        title: "✅ Registration successful",
+        description: "Account created. Please log in.",
+      });
       navigate("/login");
     } catch (err) {
       console.error(err);
-      alert("❌ Server error");
+      toast({
+        title: "❌ Server error",
+        description: "Please try again in a moment.",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -55,6 +68,16 @@ const Register = () => {
       className="min-h-screen relative flex items-center justify-center bg-cover bg-center"
       style={{ backgroundImage: `url(${heroImage})` }}
     >
+      {loading && (
+        <div className="absolute inset-0 z-20 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-3 rounded-2xl bg-white/90 px-6 py-5 shadow-xl">
+            <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+            <div className="text-sm font-medium text-foreground">
+              Creating account...
+            </div>
+          </div>
+        </div>
+      )}
       <div className="absolute inset-0 bg-black/40 backdrop-blur-md" />
       <Card className="w-full max-w-md relative z-10 shadow-2xl">
         <CardHeader>

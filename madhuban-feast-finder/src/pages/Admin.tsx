@@ -70,6 +70,8 @@ const Admin = () => {
   const [error, setError] = useState("");
   const [stats, setStats] = useState<Array<{ date: string; orders: number; revenue: number }>>([]);
   const [statsError, setStatsError] = useState("");
+  const [todayOrders, setTodayOrders] = useState(0);
+  const [todayRevenue, setTodayRevenue] = useState(0);
   const totalOrders = orders.length;
   const totalRevenue = useMemo(
     () =>
@@ -145,6 +147,29 @@ const Admin = () => {
     };
 
     fetchStats();
+  }, []);
+
+  useEffect(() => {
+    const fetchToday = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch(`${API_BASE_URL}/api/orders/stats/today`, {
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        });
+        if (!res.ok) {
+          return;
+        }
+        const data = await res.json();
+        setTodayOrders(Number(data.orders || 0));
+        setTodayRevenue(Number(data.revenue || 0));
+      } catch {
+        // ignore
+      }
+    };
+    fetchToday();
   }, []);
 
   const updateStatus = async (orderId: string, status: "prepared" | "delivered") => {
@@ -253,15 +278,15 @@ const Admin = () => {
                 <div className="grid md:grid-cols-3 gap-4">
                   <div className="rounded-2xl border border-border/60 p-5">
                     <div className="text-sm text-muted-foreground">
-                      Total Orders
+                      Delivered Today
                     </div>
-                    <div className="text-2xl font-semibold">{totalOrders}</div>
+                    <div className="text-2xl font-semibold">{todayOrders}</div>
                   </div>
                   <div className="rounded-2xl border border-border/60 p-5">
                     <div className="text-sm text-muted-foreground">
-                      Revenue
+                      Revenue Today
                     </div>
-                    <div className="text-2xl font-semibold">₹{totalRevenue}</div>
+                    <div className="text-2xl font-semibold">₹{todayRevenue}</div>
                   </div>
                   <div className="rounded-2xl border border-border/60 p-5">
                     <div className="text-sm text-muted-foreground">
@@ -269,41 +294,6 @@ const Admin = () => {
                     </div>
                     <div className="text-2xl font-semibold">COD</div>
                   </div>
-                </div>
-
-                <div className="rounded-2xl border border-border/60 p-5">
-                  <div className="flex items-center justify-between gap-2">
-                    <div>
-                      <div className="text-sm text-muted-foreground">
-                        Daily Orders & Revenue
-                      </div>
-                      <div className="text-lg font-semibold">This Month</div>
-                    </div>
-                  </div>
-                  {statsError && (
-                    <div className="mt-3 text-sm text-red-500">
-                      {statsError}
-                    </div>
-                  )}
-                  {!statsError && stats.length === 0 && (
-                    <div className="mt-3 text-sm text-muted-foreground">
-                      No data yet.
-                    </div>
-                  )}
-                  {stats.length > 0 && (
-                    <div className="mt-4 h-64 sm:h-72">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={stats}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="date" tick={{ fontSize: 11 }} />
-                          <YAxis tick={{ fontSize: 11 }} />
-                          <Tooltip />
-                          <Bar dataKey="orders" fill="#2f7a45" name="Orders" />
-                          <Bar dataKey="revenue" fill="#f28b5b" name="Revenue" />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  )}
                 </div>
               </div>
             )}
@@ -455,9 +445,49 @@ const Admin = () => {
               </div>
             )}
 
+            {active === "stats" && (
+              <div className="mt-8">
+                <div className="rounded-2xl border border-border/60 p-5">
+                  <div className="flex items-center justify-between gap-2">
+                    <div>
+                      <div className="text-sm text-muted-foreground">
+                        Daily Orders & Revenue
+                      </div>
+                      <div className="text-lg font-semibold">This Month</div>
+                    </div>
+                  </div>
+                  {statsError && (
+                    <div className="mt-3 text-sm text-red-500">
+                      {statsError}
+                    </div>
+                  )}
+                  {!statsError && stats.length === 0 && (
+                    <div className="mt-3 text-sm text-muted-foreground">
+                      No data yet.
+                    </div>
+                  )}
+                  {stats.length > 0 && (
+                    <div className="mt-4 h-64 sm:h-72">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={stats}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="date" tick={{ fontSize: 11 }} />
+                          <YAxis tick={{ fontSize: 11 }} />
+                          <Tooltip />
+                          <Bar dataKey="orders" fill="#2f7a45" name="Orders" />
+                          <Bar dataKey="revenue" fill="#f28b5b" name="Revenue" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {active !== "dashboard" &&
               active !== "menu" &&
-              active !== "orders" && (
+              active !== "orders" &&
+              active !== "stats" && (
                 <div className="mt-8 text-sm text-muted-foreground">
                   This section is ready for your data.
                 </div>
