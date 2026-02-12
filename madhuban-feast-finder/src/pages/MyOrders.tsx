@@ -190,12 +190,24 @@ const MyOrders = () => {
         </div>
       )}
 
-      <div className="mt-4 grid grid-cols-1 gap-4">
-        {orders.map((order) => (
-          <div
-            key={order._id}
-            className="rounded-2xl border border-border/60 bg-white p-5 shadow-sm"
-          >
+      {(() => {
+        const currentOrders = orders.filter((o) => o.status !== "delivered");
+        const pastOrders = orders.filter((o) => o.status === "delivered");
+        return (
+          <div className="mt-4 space-y-6">
+            <div>
+              <div className="text-lg font-semibold">Current Orders</div>
+              {currentOrders.length === 0 && (
+                <div className="mt-2 text-sm text-muted-foreground">
+                  No current orders.
+                </div>
+              )}
+              <div className="mt-3 grid grid-cols-1 gap-4">
+                {currentOrders.map((order) => (
+                  <div
+                    key={order._id}
+                    className="rounded-2xl border border-border/60 bg-white p-5 shadow-sm"
+                  >
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="font-semibold">
                 {order.address?.name || "Customer"}
@@ -258,8 +270,8 @@ const MyOrders = () => {
               </div>
             )}
 
-            {reviewOpen[order._id] && (
-              <div className="mt-4 rounded-xl border border-border/60 p-4">
+                    {reviewOpen[order._id] && (
+                      <div className="mt-4 rounded-xl border border-border/60 p-4">
                 <div className="text-sm font-medium">Your Rating</div>
                 <div className="mt-2 flex items-center gap-1">
                   {[1, 2, 3, 4, 5].map((star) => (
@@ -334,7 +346,7 @@ const MyOrders = () => {
                   </Button>
                 </div>
               </div>
-            )}
+                    )}
 
             {order.items && order.items.length > 0 && (
               <div className="mt-3 text-sm">
@@ -356,9 +368,191 @@ const MyOrders = () => {
                 </div>
               </div>
             )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <div className="text-lg font-semibold">Past Orders</div>
+              {pastOrders.length === 0 && (
+                <div className="mt-2 text-sm text-muted-foreground">
+                  No past orders yet.
+                </div>
+              )}
+              <div className="mt-3 grid grid-cols-1 gap-4">
+                {pastOrders.map((order) => (
+                  <div
+                    key={order._id}
+                    className="rounded-2xl border border-border/60 bg-white p-5 shadow-sm"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div className="font-semibold">
+                        {order.address?.name || "Customer"}
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {new Date(order.createdAt).toLocaleString()}
+                      </div>
+                    </div>
+                    <div className="mt-2 text-sm text-muted-foreground">
+                      Status:{" "}
+                      <Badge className="bg-secondary/10 text-secondary border border-secondary/20">
+                        {order.status || "placed"}
+                      </Badge>
+                    </div>
+                    <div className="mt-2 text-sm text-muted-foreground">
+                      Address: {order.address?.addressLine1}
+                      {order.address?.addressLine2
+                        ? `, ${order.address.addressLine2}`
+                        : ""}
+                      {order.address?.landmark
+                        ? `, ${order.address.landmark}`
+                        : ""}
+                      {order.address?.city ? `, ${order.address.city}` : ""}
+                      {order.address?.state ? `, ${order.address.state}` : ""}
+                      {order.address?.pincode
+                        ? ` - ${order.address.pincode}`
+                        : ""}
+                    </div>
+                    <div className="mt-3 text-sm">
+                      Total: ₹{order.totals?.orderTotal ?? 0}
+                    </div>
+
+                    {order.items && order.items.length > 0 && (
+                      <div className="mt-3 text-sm">
+                        <div className="font-medium text-foreground">Items</div>
+                        <div className="mt-2 space-y-1">
+                          {order.items.map((item, idx) => (
+                            <div
+                              key={`${order._id}-${item.dishId}-${idx}`}
+                              className="flex items-center justify-between text-muted-foreground"
+                            >
+                              <span>
+                                {item.name || item.dishId} ×{" "}
+                                {item.quantity ?? 1}
+                              </span>
+                              <span>
+                                ₹{(item.price || 0) * (item.quantity ?? 1)}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {order.status === "delivered" && !order.reviewed && (
+                      <div className="mt-4">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            setReviewOpen((prev) => ({
+                              ...prev,
+                              [order._id]: !prev[order._id],
+                            }))
+                          }
+                        >
+                          Leave Review
+                        </Button>
+                      </div>
+                    )}
+                    {order.reviewed && (
+                      <div className="mt-3 text-xs text-muted-foreground">
+                        Review submitted. Thank you!
+                      </div>
+                    )}
+
+                    {reviewOpen[order._id] && (
+                      <div className="mt-4 rounded-xl border border-border/60 p-4">
+                        <div className="text-sm font-medium">Your Rating</div>
+                        <div className="mt-2 flex items-center gap-1">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                              key={star}
+                              type="button"
+                              onClick={() =>
+                                setReviewRating((prev) => ({
+                                  ...prev,
+                                  [order._id]: star,
+                                }))
+                              }
+                              className={`h-8 w-8 flex items-center justify-center rounded-full ${
+                                (reviewRating[order._id] || 0) >= star
+                                  ? "bg-primary text-primary-foreground"
+                                  : "bg-muted text-muted-foreground"
+                              }`}
+                              aria-label={`Rate ${star} star`}
+                            >
+                              <Star className="h-4 w-4" />
+                            </button>
+                          ))}
+                        </div>
+                        <div className="mt-3">
+                          <Textarea
+                            placeholder="Write your comments..."
+                            value={reviewComment[order._id] || ""}
+                            onChange={(e) =>
+                              setReviewComment((prev) => ({
+                                ...prev,
+                                [order._id]: e.target.value,
+                              }))
+                            }
+                          />
+                        </div>
+                        <div className="mt-3">
+                          <input
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            onChange={(e) =>
+                              handleImageChange(order._id, e.target.files)
+                            }
+                          />
+                        </div>
+                        {reviewImages[order._id]?.length ? (
+                          <div className="mt-3 grid grid-cols-3 gap-2">
+                            {reviewImages[order._id].map((src, idx) => (
+                              <img
+                                key={`${order._id}-img-${idx}`}
+                                src={src}
+                                alt="Review upload"
+                                className="h-20 w-full rounded-lg object-cover"
+                              />
+                            ))}
+                          </div>
+                        ) : null}
+                        <div className="mt-4 flex gap-2">
+                          <Button
+                            size="sm"
+                            onClick={() => submitReview(order._id)}
+                            disabled={actionLoading === order._id}
+                          >
+                            {actionLoading === order._id
+                              ? "Submitting..."
+                              : "Submit Review"}
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() =>
+                              setReviewOpen((prev) => ({
+                                ...prev,
+                                [order._id]: false,
+                              }))
+                            }
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-        ))}
-      </div>
+        );
+      })()}
     </div>
   );
 };

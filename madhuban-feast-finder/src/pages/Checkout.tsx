@@ -58,6 +58,8 @@ const Checkout = () => {
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [placingOrder, setPlacingOrder] = useState(false);
   const storageKey = getStorageKey(localStorage.getItem("username"));
+  const hasAddress =
+    Boolean(details.name && details.addressLine1 && details.phone);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
@@ -546,41 +548,43 @@ const Checkout = () => {
             </CardContent>
           </Card>
 
-          <Card className="card-restaurant h-fit">
-            <CardHeader>
-              <CardTitle>Order Summary</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center justify-between text-sm">
-                <span>Items</span>
-                <span>₹{grandTotal}</span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span>Delivery</span>
-                <span>{deliveryFee === 0 ? "Free" : `₹${deliveryFee}`}</span>
-              </div>
-              <div className="flex items-center justify-between text-sm">
-                <span>GST (5%)</span>
-                <span>₹{gst}</span>
-              </div>
-              <div className="flex items-center justify-between text-lg font-semibold pt-2">
-                <span>Order Total</span>
-                <span>₹{orderTotal}</span>
-              </div>
-              {grandTotal < freeDeliveryThreshold && (
-                <div className="text-sm text-muted-foreground">
-                  Add ₹{freeDeliveryThreshold - grandTotal} more for free delivery.
+          {hasAddress && (
+            <Card className="card-restaurant h-fit">
+              <CardHeader>
+                <CardTitle>Order Summary</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center justify-between text-sm">
+                  <span>Items</span>
+                  <span>₹{grandTotal}</span>
                 </div>
-              )}
-              <Button
-                className="w-full"
-                disabled={editMode || cartItems.length === 0 || placingOrder}
-                onClick={handlePlaceOrder}
-              >
-                {placingOrder ? "Placing..." : "Place Order"}
-              </Button>
-            </CardContent>
-          </Card>
+                <div className="flex items-center justify-between text-sm">
+                  <span>Delivery</span>
+                  <span>{deliveryFee === 0 ? "Free" : `₹${deliveryFee}`}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span>GST (5%)</span>
+                  <span>₹{gst}</span>
+                </div>
+                <div className="flex items-center justify-between text-lg font-semibold pt-2">
+                  <span>Order Total</span>
+                  <span>₹{orderTotal}</span>
+                </div>
+                {grandTotal < freeDeliveryThreshold && (
+                  <div className="text-sm text-muted-foreground">
+                    Add ₹{freeDeliveryThreshold - grandTotal} more for free delivery.
+                  </div>
+                )}
+                <Button
+                  className="w-full"
+                  disabled={editMode || cartItems.length === 0 || placingOrder}
+                  onClick={handlePlaceOrder}
+                >
+                  {placingOrder ? "Placing..." : "Place Order"}
+                </Button>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </div>
