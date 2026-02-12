@@ -231,7 +231,11 @@ const MyOrders = () => {
               {order.address?.pincode ? ` - ${order.address.pincode}` : ""}
             </div>
             <div className="mt-3 text-sm">Total: ₹{order.totals?.orderTotal ?? 0}</div>
-            {order.status === "placed" ? (
+            {order.status === "canceled" ? (
+              <div className="mt-3 text-xs text-red-500">
+                Your order cannot be delivered. It is cancelled by owner.
+              </div>
+            ) : order.status === "placed" ? (
               <div className="mt-3">
                 <button
                   type="button"
@@ -242,11 +246,11 @@ const MyOrders = () => {
                   {actionLoading === order._id ? "Canceling..." : "Cancel Order"}
                 </button>
               </div>
-            ) : (
+            ) : order.status === "prepared" ? (
               <div className="mt-3 text-xs text-muted-foreground">
                 Sorry, order can't be canceled because it is already prepared.
               </div>
-            )}
+            ) : null}
 
             {order.status === "delivered" && !order.reviewed && (
               <div className="mt-4">

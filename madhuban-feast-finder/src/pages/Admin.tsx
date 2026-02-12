@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { API_BASE_URL } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -83,6 +83,8 @@ const Admin = () => {
     }>
   >([]);
   const [reviewsError, setReviewsError] = useState("");
+  const [unseenCount, setUnseenCount] = useState(0);
+  const lastSeenRef = useRef<number>(Date.now());
   const totalOrders = orders.length;
   const totalRevenue = useMemo(
     () =>
@@ -91,7 +93,7 @@ const Admin = () => {
   );
 
   useEffect(() => {
-    const fetchOrders = async () => {
+    const fetchOrders = async (markSeen = false) => {
       setLoading(true);
       setError("");
       try {
@@ -113,7 +115,19 @@ const Admin = () => {
           throw new Error(data.message || "Failed to load orders");
         }
         const data = await res.json();
-        setOrders(Array.isArray(data.orders) ? data.orders : []);
+        const nextOrders = Array.isArray(data.orders) ? data.orders : [];
+        setOrders(nextOrders);
+
+        if (markSeen) {
+          lastSeenRef.current = Date.now();
+          setUnseenCount(0);
+        } else {
+          const unseen = nextOrders.filter((order: Order) => {
+            const ts = new Date(order.createdAt).getTime();
+            return ts > lastSeenRef.current;
+          }).length;
+          setUnseenCount(unseen);
+        }
       } catch (err: any) {
         setError(err?.message || "Failed to load orders");
       } finally {
@@ -121,7 +135,9 @@ const Admin = () => {
       }
     };
 
-    fetchOrders();
+    fetchOrders(true);
+    const id = window.setInterval(() => fetchOrders(false), 10000);
+    return () => window.clearInterval(id);
   }, []);
 
   useEffect(() => {
@@ -187,10 +203,6 @@ const Admin = () => {
       }
     };
 
-    fetchStats();
-  }, []);
-
-  useEffect(() => {
     const fetchToday = async () => {
       try {
         const token = localStorage.getItem("token");
@@ -210,7 +222,14 @@ const Admin = () => {
         // ignore
       }
     };
+
+    fetchStats();
     fetchToday();
+    const id = window.setInterval(() => {
+      fetchStats();
+      fetchToday();
+    }, 10000);
+    return () => window.clearInterval(id);
   }, []);
 
   const updateStatus = async (orderId: string, status: "prepared" | "delivered") => {
@@ -290,6 +309,11 @@ const Admin = () => {
                     >
                       <Icon className="h-4 w-4" />
                       {item.label}
+                      {item.id === "orders" && unseenCount > 0 && (
+                        <span className="ml-auto inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-white text-[#3f3a33] text-xs font-semibold px-1">
+                          {unseenCount}
+                        </span>
+                      )}
                     </button>
                   );
                 })}
@@ -455,6 +479,13 @@ const Admin = () => {
                         onClick={() => updateStatus(order._id, "delivered")}
                       >
                         Delivered
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => updateStatus(order._id, "canceled")}
+                      >
+                        Cancel
                       </Button>
                     </div>
                       {order.items && order.items.length > 0 && (
