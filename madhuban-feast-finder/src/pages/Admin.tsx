@@ -86,6 +86,8 @@ const Admin = () => {
   const [unseenCount, setUnseenCount] = useState(0);
   const lastSeenRef = useRef<number>(Date.now());
   const [pushError, setPushError] = useState("");
+  const [pushEnabled, setPushEnabled] = useState(false);
+  const [pushLoading, setPushLoading] = useState(false);
 
   const urlBase64ToUint8Array = (base64String: string) => {
     const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -152,46 +154,60 @@ const Admin = () => {
     return () => window.clearInterval(id);
   }, []);
 
-  useEffect(() => {
-    const setupPush = async () => {
-      try {
-        if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
-          return;
-        }
-        const publicKey = (import.meta.env.VITE_VAPID_PUBLIC_KEY as string)?.trim();
-        if (!publicKey) {
-          return;
-        }
-        const permission = await Notification.requestPermission();
-        if (permission !== "granted") {
-          setPushError("Notifications are blocked. Please allow them in browser settings.");
-          return;
-        }
-        await navigator.serviceWorker.register("/sw.js");
-        const reg = await navigator.serviceWorker.ready;
-        const existing = await reg.pushManager.getSubscription();
-        const subscription =
-          existing ||
-          (await reg.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array(publicKey),
-          }));
-
-        const token = localStorage.getItem("token");
-        await fetch(`${API_BASE_URL}/api/notifications/subscribe`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            ...(token ? { Authorization: `Bearer ${token}` } : {}),
-          },
-          body: JSON.stringify(subscription),
-        });
-      } catch (err: any) {
-        setPushError(err?.message || "Failed to enable notifications");
+  const setupPush = async (requestPermission: boolean) => {
+    try {
+      setPushLoading(true);
+      setPushError("");
+      if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+        setPushError("Push notifications are not supported in this browser.");
+        return;
       }
-    };
+      const publicKey = (import.meta.env.VITE_VAPID_PUBLIC_KEY as string)?.trim();
+      if (!publicKey) {
+        setPushError("Missing VAPID public key.");
+        return;
+      }
 
-    setupPush();
+      let permission = Notification.permission;
+      if (requestPermission && permission !== "granted") {
+        permission = await Notification.requestPermission();
+      }
+      if (permission !== "granted") {
+        setPushError("Notifications are blocked. Please allow them in browser settings.");
+        return;
+      }
+
+      await navigator.serviceWorker.register("/sw.js");
+      const reg = await navigator.serviceWorker.ready;
+      const existing = await reg.pushManager.getSubscription();
+      const subscription =
+        existing ||
+        (await reg.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(publicKey),
+        }));
+
+      const token = localStorage.getItem("token");
+      await fetch(`${API_BASE_URL}/api/notifications/subscribe`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify(subscription),
+      });
+      setPushEnabled(true);
+    } catch (err: any) {
+      setPushError(err?.message || "Registration failed - push service error");
+    } finally {
+      setPushLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (Notification.permission === "granted") {
+      setupPush(false);
+    }
   }, []);
 
   useEffect(() => {
@@ -399,6 +415,25 @@ const Admin = () => {
                     {pushError}
                   </div>
                 )}
+                <div className="flex flex-wrap items-center gap-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setupPush(true)}
+                    disabled={pushLoading || pushEnabled}
+                  >
+                    {pushEnabled
+                      ? "Notifications Enabled"
+                      : pushLoading
+                      ? "Enabling..."
+                      : "Enable Notifications"}
+                  </Button>
+                  {!pushEnabled && (
+                    <div className="text-xs text-muted-foreground">
+                      Allow notifications in your browser to receive new order alerts.
+                    </div>
+                  )}
+                </div>
                 <div className="grid md:grid-cols-3 gap-4">
                   <div className="rounded-2xl border border-border/60 p-5">
                     <div className="text-sm text-muted-foreground">
