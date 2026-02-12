@@ -50,9 +50,11 @@ const Checkout = () => {
   const [editMode, setEditMode] = useState(true);
   const [addingNew, setAddingNew] = useState(false);
   const [showSelector, setShowSelector] = useState(false);
-  const [errors, setErrors] = useState<{ phone?: string; altPhone?: string }>(
-    {}
-  );
+  const [errors, setErrors] = useState<{
+    phone?: string;
+    altPhone?: string;
+    village?: string;
+  }>({});
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [placingOrder, setPlacingOrder] = useState(false);
   const storageKey = getStorageKey(localStorage.getItem("username"));
@@ -93,20 +95,45 @@ const Checkout = () => {
       .replace(/\s+/g, " ")
       .trim();
 
-  const freeDeliveryAreas = new Set([
-    "taigor nagar",
-    "main market",
-    "indra market",
+  const normalizedCity = normalize(details.city || "");
+  const normalizedVillage = normalize(details.state || "");
+
+  const groupA = new Set(["main market", "tegor nagar"]);
+  const groupB = new Set([
+    "nirmal nagar",
+    "gurugram",
+    "dev nagar",
+    "surendra nagar",
+    "baikunthpur",
+  ]);
+  const groupC = new Set([
+    "govind nagar",
+    "bhakti nagar",
+    "thakur nagar",
+    "jayant nagar",
+    "mahendra nagar",
+    "ranjeet nagar",
   ]);
 
-  const normalizedVillage = normalize(details.state || "");
-  const compactVillage = normalizedVillage.replace(/\s+/g, "");
-  const isFreeDeliveryArea =
-    freeDeliveryAreas.has(normalizedVillage) ||
-    freeDeliveryAreas.has(compactVillage);
+  const getDeliveryRules = () => {
+    if (normalizedCity === "sidcul") {
+      return { threshold: 350, fee: 50 };
+    }
+    if (groupA.has(normalizedVillage)) {
+      return { threshold: 100, fee: 30 };
+    }
+    if (groupB.has(normalizedVillage)) {
+      return { threshold: 150, fee: 30 };
+    }
+    if (groupC.has(normalizedVillage)) {
+      return { threshold: 200, fee: 40 };
+    }
+    return { threshold: 200, fee: 50 };
+  };
 
-  const freeDeliveryThreshold = isFreeDeliveryArea ? 100 : 200;
-  const deliveryFee = grandTotal >= freeDeliveryThreshold ? 0 : 30;
+  const { threshold: freeDeliveryThreshold, fee: baseDeliveryFee } =
+    getDeliveryRules();
+  const deliveryFee = grandTotal >= freeDeliveryThreshold ? 0 : baseDeliveryFee;
   const gst = Math.round(grandTotal * 0.05);
   const orderTotal = grandTotal + deliveryFee + gst;
 
@@ -114,11 +141,16 @@ const Checkout = () => {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
+    if (name === "city" && value === "SIDCUL") {
+      setDetails((prev) => ({ ...prev, [name]: value, state: "" }));
+      return;
+    }
     setDetails((prev) => ({ ...prev, [name]: value }));
   };
 
   const validate = () => {
-    const nextErrors: { phone?: string; altPhone?: string } = {};
+    const nextErrors: { phone?: string; altPhone?: string; village?: string } =
+      {};
     const phoneDigits = details.phone.replace(/\D/g, "");
     const altDigits = details.altPhone.replace(/\D/g, "");
 
@@ -131,6 +163,10 @@ const Checkout = () => {
       } else if (altDigits === phoneDigits) {
         nextErrors.altPhone = "Alternate phone must be different";
       }
+    }
+
+    if (details.city === "Shaktifarm" && !details.state.trim()) {
+      nextErrors.village = "Village is required";
     }
 
     setErrors(nextErrors);
@@ -387,20 +423,52 @@ const Checkout = () => {
                     value={details.landmark}
                     onChange={handleChange}
                   />
-                  <Input
+                  <select
                     name="city"
-                    placeholder="City"
                     value={details.city}
                     onChange={handleChange}
                     required
-                  />
-                  <Input
-                    name="state"
-                    placeholder="Village"
-                    value={details.state}
-                    onChange={handleChange}
-                    required
-                  />
+                    className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                  >
+                    <option value="" disabled>
+                      Select City
+                    </option>
+                    <option value="Shaktifarm">Shaktifarm</option>
+                    <option value="SIDCUL">SIDCUL</option>
+                  </select>
+                  {details.city === "Shaktifarm" ? (
+                    <div className="space-y-1">
+                      <select
+                        name="state"
+                        value={details.state}
+                        onChange={handleChange}
+                        required
+                        className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
+                      >
+                        <option value="" disabled>
+                          Select Village
+                        </option>
+                        <option value="Main Market">Main Market</option>
+                        <option value="Tegor Nagar">Tegor Nagar</option>
+                        <option value="Nirmal Nagar">Nirmal Nagar</option>
+                        <option value="Gurugram">Gurugram</option>
+                        <option value="Dev Nagar">Dev Nagar</option>
+                        <option value="Surendra Nagar">Surendra Nagar</option>
+                        <option value="Baikunthpur">Baikunthpur</option>
+                        <option value="Govind Nagar">Govind Nagar</option>
+                        <option value="Bhakti Nagar">Bhakti Nagar</option>
+                        <option value="Thakur Nagar">Thakur Nagar</option>
+                        <option value="Jayant Nagar">Jayant Nagar</option>
+                        <option value="Mahendra Nagar">Mahendra Nagar</option>
+                        <option value="Ranjeet Nagar">Ranjeet Nagar</option>
+                      </select>
+                      {errors.village && (
+                        <p className="text-xs text-red-500">{errors.village}</p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="h-10" />
+                  )}
                 </div>
 
                 <Input
