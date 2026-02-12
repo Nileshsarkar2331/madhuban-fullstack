@@ -5,11 +5,12 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Search, Plus, Minus } from 'lucide-react';
 import { addToCart, removeFromCart, updateCartQuantity } from '@/lib/cart';
+import { API_BASE_URL } from '@/lib/api';
 import { useCart } from '@/hooks/use-cart';
 import { useNavigate, useParams } from 'react-router-dom';
 
 type MenuItem = {
-  id: number;
+  id: number | string;
   name: string;
   price: number;
   priceLabel?: string;
@@ -17,6 +18,7 @@ type MenuItem = {
   description?: string;
   isVeg?: boolean;
   tag?: string;
+  categoryId?: string;
 };
 
 type MenuSection = {
@@ -27,16 +29,40 @@ type MenuSection = {
 
 const Menu = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [loadingId, setLoadingId] = useState<number | null>(null);
-  const [selectedSizes, setSelectedSizes] = useState<Record<number, string>>(
+  const [loadingId, setLoadingId] = useState<string | null>(null);
+  const [selectedSizes, setSelectedSizes] = useState<Record<string, string>>(
     {}
   );
+  const [dynamicItems, setDynamicItems] = useState<MenuItem[]>([]);
   const { items: cartItems } = useCart();
   const { category } = useParams();
   const navigate = useNavigate();
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' as ScrollBehavior });
+  }, []);
+
+  useEffect(() => {
+    const fetchDynamicItems = async () => {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/menu-items`);
+        if (!res.ok) return;
+        const data = await res.json();
+        const items = Array.isArray(data.items) ? data.items : [];
+        setDynamicItems(
+          items.map((item) => ({
+            id: item._id,
+            name: item.name,
+            price: Number(item.price) || 0,
+            priceLabel: `₹${item.price}`,
+            categoryId: item.categoryId,
+          }))
+        );
+      } catch {
+        setDynamicItems([]);
+      }
+    };
+    fetchDynamicItems();
   }, []);
 
   useEffect(() => {
@@ -49,25 +75,31 @@ const Menu = () => {
     return () => window.clearTimeout(id);
   }, [category]);
 
+  const getItemKey = (item: MenuItem) => String(item.id);
+
   const getSelectedPrice = (item: MenuItem) => {
     if (!item.sizes || item.sizes.length === 0) return item.price;
-    const selectedLabel = selectedSizes[item.id] || item.sizes[0].label;
+    const key = getItemKey(item);
+    const selectedLabel = selectedSizes[key] || item.sizes[0].label;
     const found = item.sizes.find((s) => s.label === selectedLabel);
     return found?.price ?? item.sizes[0].price;
   };
 
-  const getSelectedLabel = (item: MenuItem) =>
-    item.sizes && item.sizes.length > 0
-      ? selectedSizes[item.id] || item.sizes[0].label
-      : undefined;
+  const getSelectedLabel = (item: MenuItem) => {
+    if (!item.sizes || item.sizes.length === 0) return undefined;
+    const key = getItemKey(item);
+    return selectedSizes[key] || item.sizes[0].label;
+  };
 
   const getCartKey = (item: MenuItem) => {
     const sizeLabel = getSelectedLabel(item);
-    return sizeLabel ? `${item.id}-${sizeLabel}` : String(item.id);
+    const key = getItemKey(item);
+    return sizeLabel ? `${key}-${sizeLabel}` : key;
   };
 
   const handleAddToCart = (item: MenuItem) => {
-    setLoadingId(item.id);
+    const key = getItemKey(item);
+    setLoadingId(key);
     const price = getSelectedPrice(item);
     const sizeLabel = getSelectedLabel(item);
     const name = sizeLabel ? `${item.name} (${sizeLabel})` : item.name;
@@ -510,15 +542,26 @@ const Menu = () => {
     { id: 'soup', label: 'Soup', emoji: '🍲' },
   ];
 
+  const mergedSections = useMemo(() => {
+    if (dynamicItems.length === 0) return sections;
+    return sections.map((section) => ({
+      ...section,
+      items: [
+        ...section.items,
+        ...dynamicItems.filter((item) => item.categoryId === section.id),
+      ],
+    }));
+  }, [sections, dynamicItems]);
+
   const filteredSections = useMemo(() => {
     if (category) {
-      const section = sections.find((s) => s.id === category);
+      const section = mergedSections.find((s) => s.id === category);
       return section ? [section] : [];
     }
     const q = searchQuery.trim().toLowerCase();
-    if (!q) return sections;
+    if (!q) return mergedSections;
 
-    return sections
+    return mergedSections
       .map((section) => {
         const items = section.items.filter((item) =>
           `${item.name} ${item.description || ''} ${section.title}`
@@ -528,7 +571,7 @@ const Menu = () => {
         return { ...section, items };
       })
       .filter((section) => section.items.length > 0);
-  }, [sections, searchQuery]);
+  }, [mergedSections, searchQuery]);
 
   return (
     <div className="min-h-screen bg-background px-4 py-12 max-w-6xl mx-auto">
@@ -632,12 +675,13 @@ const Menu = () => {
                           <select
                             className="h-9 rounded-md border border-border bg-background px-2 text-sm"
                             value={
-                              selectedSizes[item.id] || item.sizes[0].label
+                              selectedSizes[getItemKey(item)] ||
+                              item.sizes[0].label
                             }
                             onChange={(e) =>
                               setSelectedSizes((prev) => ({
                                 ...prev,
-                                [item.id]: e.target.value,
+                                [getItemKey(item)]: e.target.value,
                               }))
                             }
                           >
@@ -659,11 +703,13 @@ const Menu = () => {
                           return (
                             <Button
                               size="sm"
-                              disabled={loadingId === item.id}
+                              disabled={loadingId === getItemKey(item)}
                               onClick={() => handleAddToCart(item)}
                               className="w-full sm:w-auto"
                             >
-                              {loadingId === item.id ? 'Adding...' : 'Add to Cart'}
+                              {loadingId === getItemKey(item)
+                                ? 'Adding...'
+                                : 'Add to Cart'}
                               <Plus className="ml-1 h-4 w-4" />
                             </Button>
                           );

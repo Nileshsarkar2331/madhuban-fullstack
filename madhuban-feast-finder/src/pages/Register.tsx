@@ -6,12 +6,14 @@ import { API_BASE_URL } from "@/lib/api";
 import { useNavigate, Link } from "react-router-dom";
 import heroImage from "@/assets/curry-hero.jpg";
 import { useToast } from "@/hooks/use-toast";
+import { Eye, EyeOff } from "lucide-react";
 
 const Register = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [passwordError, setPasswordError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -105,13 +107,24 @@ const Register = () => {
               onChange={(e) => setUsername(e.target.value)}
             />
 
-            <Input
-              type="password"
-              placeholder="Password (min 6, letters & numbers)"
-              value={password}
-              required
-              onChange={(e) => setPassword(e.target.value)}
-            />
+            <div className="relative">
+              <Input
+                type={showPassword ? "text" : "password"}
+                placeholder="Password (min 6, letters & numbers)"
+                value={password}
+                required
+                onChange={(e) => setPassword(e.target.value)}
+                className="pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+              </button>
+            </div>
             {passwordError && (
               <p className="text-xs text-red-400">{passwordError}</p>
             )}

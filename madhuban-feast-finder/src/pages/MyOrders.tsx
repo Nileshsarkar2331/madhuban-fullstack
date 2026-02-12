@@ -148,6 +148,10 @@ const MyOrders = () => {
       alert("Please provide a rating between 1 and 5.");
       return;
     }
+    if (!reviewImages[orderId] || reviewImages[orderId].length === 0) {
+      alert("Please upload at least one photo of your order.");
+      return;
+    }
     setActionLoading(orderId);
     try {
       const token = localStorage.getItem("token");

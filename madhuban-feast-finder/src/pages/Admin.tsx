@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { API_BASE_URL } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import {
   BarChart3,
@@ -23,6 +22,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { useToast } from "@/hooks/use-toast";
 
 type Order = {
   _id: string;
@@ -65,6 +65,7 @@ type AdminSection =
 
 const Admin = () => {
   const [active, setActive] = useState<AdminSection>("dashboard");
+  const { toast } = useToast();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -80,6 +81,7 @@ const Admin = () => {
       comment?: string;
       images?: string[];
       createdAt: string;
+      isVisible?: boolean;
     }>
   >([]);
   const [reviewsError, setReviewsError] = useState("");
@@ -88,6 +90,85 @@ const Admin = () => {
   const [pushError, setPushError] = useState("");
   const [pushEnabled, setPushEnabled] = useState(false);
   const [pushLoading, setPushLoading] = useState(false);
+  const [productName, setProductName] = useState("");
+  const [productPrice, setProductPrice] = useState("");
+  const [productCategory, setProductCategory] = useState("");
+  const [productSaving, setProductSaving] = useState(false);
+
+  const categoryOptions = [
+    { id: "momos", label: "Momos" },
+    { id: "drinks", label: "Drinks" },
+    { id: "pizza", label: "Pizza" },
+    { id: "burger", label: "Burger" },
+    { id: "pasta", label: "Pasta" },
+    { id: "combos", label: "Combos" },
+    { id: "nonveg-main", label: "Non‑Veg" },
+    { id: "veg-main", label: "Veg" },
+    { id: "chinese", label: "Chinese" },
+    { id: "rolls", label: "Rolls" },
+    { id: "chilli", label: "Chilli" },
+    { id: "starters", label: "Starters" },
+    { id: "rice", label: "Rice" },
+    { id: "roti", label: "Roti" },
+    { id: "salad", label: "Salad" },
+    { id: "soup", label: "Soup" },
+  ];
+
+  const handleAddProduct = async () => {
+    const name = productName.trim();
+    const price = Number(productPrice);
+    const categoryId = productCategory.trim();
+    if (!name || !categoryId || Number.isNaN(price) || price <= 0) {
+      toast({
+        title: "Missing fields",
+        description: "Please enter name, price, and category.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setProductSaving(true);
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_BASE_URL}/api/menu-items`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ name, price, categoryId }),
+      });
+      const text = await res.text();
+      let data: any = {};
+      try {
+        data = text ? JSON.parse(text) : {};
+      } catch {
+        data = {};
+      }
+      if (!res.ok) {
+        toast({
+          title: "Failed to add",
+          description: data.message || "Please try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+      toast({
+        title: "Product added",
+        description: "It will appear in the menu.",
+      });
+      setProductName("");
+      setProductPrice("");
+      setProductCategory("");
+    } catch (err: any) {
+      toast({
+        title: "Server error",
+        description: err?.message || "Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setProductSaving(false);
+    }
+  };
 
   const urlBase64ToUint8Array = (base64String: string) => {
     const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -462,16 +543,49 @@ const Admin = () => {
                 <div className="rounded-2xl border border-border/60 p-5">
                   <div className="font-semibold">Add New Menu Item</div>
                   <div className="mt-4 grid gap-3">
-                    <Input placeholder="Dish name" />
-                    <Input placeholder="Category (e.g. starters)" />
-                    <Input placeholder="Price" type="number" />
-                    <Textarea placeholder="Short description" />
-                    <Input placeholder="Image URL" />
+                    <Input
+                      placeholder="Dish name"
+                      value={productName}
+                      onChange={(e) => setProductName(e.target.value)}
+                    />
+                    <select
+                      value={productCategory}
+                      onChange={(e) => setProductCategory(e.target.value)}
+                      className="h-10 rounded-md border border-input bg-background px-3 text-sm"
+                    >
+                      <option value="" disabled>
+                        Select category
+                      </option>
+                      {categoryOptions.map((option) => (
+                        <option key={option.id} value={option.id}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                    <Input
+                      placeholder="Price"
+                      type="number"
+                      value={productPrice}
+                      onChange={(e) => setProductPrice(e.target.value)}
+                    />
                     <div className="flex gap-2">
-                      <Button className="bg-primary text-primary-foreground">
-                        Save Item
+                      <Button
+                        className="bg-primary text-primary-foreground"
+                        onClick={handleAddProduct}
+                        disabled={productSaving}
+                      >
+                        {productSaving ? "Saving..." : "Save Item"}
                       </Button>
-                      <Button variant="outline">Reset</Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setProductName("");
+                          setProductPrice("");
+                          setProductCategory("");
+                        }}
+                      >
+                        Reset
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -683,6 +797,52 @@ const Admin = () => {
                         <div className="text-sm text-muted-foreground">
                           {new Date(review.createdAt).toLocaleString()}
                         </div>
+                      </div>
+                      <div className="mt-2 flex items-center gap-2 text-sm">
+                        <label className="inline-flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            checked={Boolean(review.isVisible)}
+                            onChange={async (e) => {
+                              const next = e.target.checked;
+                              try {
+                                const token = localStorage.getItem("token");
+                                const res = await fetch(
+                                  `${API_BASE_URL}/api/reviews/${review._id}/visibility`,
+                                  {
+                                    method: "PATCH",
+                                    headers: {
+                                      "Content-Type": "application/json",
+                                      ...(token
+                                        ? { Authorization: `Bearer ${token}` }
+                                        : {}),
+                                    },
+                                    body: JSON.stringify({ isVisible: next }),
+                                  }
+                                );
+                                if (!res.ok) {
+                                  throw new Error("Failed to update visibility");
+                                }
+                                setReviews((prev) =>
+                                  prev.map((r) =>
+                                    r._id === review._id
+                                      ? { ...r, isVisible: next }
+                                      : r
+                                  )
+                                );
+                              } catch {
+                                // revert if failed
+                                e.target.checked = !next;
+                              }
+                            }}
+                          />
+                          Show on website
+                        </label>
+                        {!review.isVisible && (
+                          <span className="text-xs text-muted-foreground">
+                            Hidden
+                          </span>
+                        )}
                       </div>
                       {review.comment && (
                         <div className="mt-2 text-sm text-muted-foreground">

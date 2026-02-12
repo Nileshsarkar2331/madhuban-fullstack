@@ -54,6 +54,7 @@ const Checkout = () => {
     phone?: string;
     altPhone?: string;
     village?: string;
+    pincode?: string;
   }>({});
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [placingOrder, setPlacingOrder] = useState(false);
@@ -151,24 +152,34 @@ const Checkout = () => {
   };
 
   const validate = () => {
-    const nextErrors: { phone?: string; altPhone?: string; village?: string } =
-      {};
+    const nextErrors: {
+      phone?: string;
+      altPhone?: string;
+      village?: string;
+      pincode?: string;
+    } = {};
     const phoneDigits = details.phone.replace(/\D/g, "");
     const altDigits = details.altPhone.replace(/\D/g, "");
 
     if (phoneDigits.length !== 10) {
       nextErrors.phone = "Phone number must be 10 digits";
     }
-    if (details.altPhone) {
-      if (altDigits.length !== 10) {
-        nextErrors.altPhone = "Alternate phone must be 10 digits";
-      } else if (altDigits === phoneDigits) {
-        nextErrors.altPhone = "Alternate phone must be different";
-      }
+    if (!details.altPhone.trim()) {
+      nextErrors.altPhone = "Alternate phone is required";
+    } else if (altDigits.length !== 10) {
+      nextErrors.altPhone = "Alternate phone must be 10 digits";
+    } else if (altDigits === phoneDigits) {
+      nextErrors.altPhone = "Alternate phone must be different";
     }
 
     if (details.city === "Shaktifarm" && !details.state.trim()) {
       nextErrors.village = "Village is required";
+    }
+
+    const allowedPins = new Set(["262405", "263151"]);
+    const pin = details.pincode.trim();
+    if (!allowedPins.has(pin)) {
+      nextErrors.pincode = "Sorry, we do not deliver here.";
     }
 
     setErrors(nextErrors);
@@ -395,28 +406,15 @@ const Checkout = () => {
                 <div className="space-y-1">
                   <Input
                     name="altPhone"
-                    placeholder="Alternate Phone (optional)"
+                    placeholder="Alternate Phone (required)"
                     value={details.altPhone}
                     onChange={handleChange}
+                    required
                   />
                   {errors.altPhone && (
                     <p className="text-xs text-red-500">{errors.altPhone}</p>
                   )}
                 </div>
-
-                <Input
-                  name="addressLine1"
-                  placeholder="House/Flat No., Street"
-                  value={details.addressLine1}
-                  onChange={handleChange}
-                  required
-                />
-                <Input
-                  name="addressLine2"
-                  placeholder="Area/Locality"
-                  value={details.addressLine2}
-                  onChange={handleChange}
-                />
 
                 <div className="grid sm:grid-cols-3 gap-4">
                   <Input
@@ -474,12 +472,29 @@ const Checkout = () => {
                 </div>
 
                 <Input
+                  name="addressLine1"
+                  placeholder="House/Flat No., Street"
+                  value={details.addressLine1}
+                  onChange={handleChange}
+                  required
+                />
+                <Input
+                  name="addressLine2"
+                  placeholder="Area/Locality"
+                  value={details.addressLine2}
+                  onChange={handleChange}
+                />
+
+                <Input
                   name="pincode"
                   placeholder="Pincode"
                   value={details.pincode}
                   onChange={handleChange}
                   required
                 />
+                {errors.pincode && (
+                  <p className="text-xs text-red-500">{errors.pincode}</p>
+                )}
 
                 <Textarea
                   name="instructions"
