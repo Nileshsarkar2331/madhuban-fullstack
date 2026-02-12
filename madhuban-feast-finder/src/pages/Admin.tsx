@@ -158,12 +158,13 @@ const Admin = () => {
         if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
           return;
         }
-        const publicKey = import.meta.env.VITE_VAPID_PUBLIC_KEY as string;
+        const publicKey = (import.meta.env.VITE_VAPID_PUBLIC_KEY as string)?.trim();
         if (!publicKey) {
           return;
         }
         const permission = await Notification.requestPermission();
         if (permission !== "granted") {
+          setPushError("Notifications are blocked. Please allow them in browser settings.");
           return;
         }
         await navigator.serviceWorker.register("/sw.js");
