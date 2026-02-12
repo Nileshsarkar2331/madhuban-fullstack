@@ -72,6 +72,17 @@ const Admin = () => {
   const [statsError, setStatsError] = useState("");
   const [todayOrders, setTodayOrders] = useState(0);
   const [todayRevenue, setTodayRevenue] = useState(0);
+  const [reviews, setReviews] = useState<
+    Array<{
+      _id: string;
+      orderId: string;
+      rating: number;
+      comment?: string;
+      images?: string[];
+      createdAt: string;
+    }>
+  >([]);
+  const [reviewsError, setReviewsError] = useState("");
   const totalOrders = orders.length;
   const totalRevenue = useMemo(
     () =>
@@ -111,6 +122,36 @@ const Admin = () => {
     };
 
     fetchOrders();
+  }, []);
+
+  useEffect(() => {
+    const fetchReviews = async () => {
+      setReviewsError("");
+      try {
+        const token = localStorage.getItem("token");
+        const res = await fetch(`${API_BASE_URL}/api/reviews`, {
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+        });
+        if (!res.ok) {
+          const text = await res.text();
+          let data: any = {};
+          try {
+            data = text ? JSON.parse(text) : {};
+          } catch {
+            data = {};
+          }
+          throw new Error(data.message || "Failed to load reviews");
+        }
+        const data = await res.json();
+        setReviews(Array.isArray(data.reviews) ? data.reviews : []);
+      } catch (err: any) {
+        setReviewsError(err?.message || "Failed to load reviews");
+      }
+    };
+    fetchReviews();
   }, []);
 
   useEffect(() => {
@@ -492,6 +533,54 @@ const Admin = () => {
                   This section is ready for your data.
                 </div>
               )}
+
+            {active === "reviews" && (
+              <div className="mt-8">
+                <div className="text-lg font-semibold">Customer Reviews</div>
+                {reviewsError && (
+                  <div className="mt-3 text-sm text-red-500">{reviewsError}</div>
+                )}
+                {!reviewsError && reviews.length === 0 && (
+                  <div className="mt-3 text-sm text-muted-foreground">
+                    No reviews yet.
+                  </div>
+                )}
+                <div className="mt-4 grid grid-cols-1 gap-4">
+                  {reviews.map((review) => (
+                    <div
+                      key={review._id}
+                      className="rounded-2xl border border-border/60 p-5"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <div className="font-semibold">
+                          Rating: {review.rating} / 5
+                        </div>
+                        <div className="text-sm text-muted-foreground">
+                          {new Date(review.createdAt).toLocaleString()}
+                        </div>
+                      </div>
+                      {review.comment && (
+                        <div className="mt-2 text-sm text-muted-foreground">
+                          {review.comment}
+                        </div>
+                      )}
+                      {review.images && review.images.length > 0 && (
+                        <div className="mt-3 grid grid-cols-3 gap-2">
+                          {review.images.map((src, idx) => (
+                            <img
+                              key={`${review._id}-${idx}`}
+                              src={src}
+                              alt="Review"
+                              className="h-20 w-full rounded-lg object-cover"
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </main>
         </div>
       </div>

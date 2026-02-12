@@ -1,5 +1,6 @@
 const mongoose = require("mongoose");
 const Order = require("../models/Order");
+const Review = require("../models/Review");
 
 exports.createOrder = async (req, res) => {
   try {
@@ -79,7 +80,16 @@ exports.listMyOrders = async (req, res) => {
     const orders = await Order.find({ userId })
       .sort({ createdAt: -1 })
       .lean();
-    return res.status(200).json({ orders });
+    const orderIds = orders.map((order) => String(order._id));
+    const reviews = await Review.find({ orderId: { $in: orderIds } })
+      .select("orderId")
+      .lean();
+    const reviewedSet = new Set(reviews.map((review) => String(review.orderId)));
+    const withFlags = orders.map((order) => ({
+      ...order,
+      reviewed: reviewedSet.has(String(order._id)),
+    }));
+    return res.status(200).json({ orders: withFlags });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Server error" });

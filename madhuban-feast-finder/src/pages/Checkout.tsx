@@ -24,6 +24,9 @@ type DeliveryDetails = {
 
 const STORAGE_KEY = "delivery_addresses_v1";
 
+const getStorageKey = (username: string | null) =>
+  `${STORAGE_KEY}_${(username || "guest").toLowerCase()}`;
+
 const emptyDetails: DeliveryDetails = {
   id: "",
   name: "",
@@ -52,10 +55,11 @@ const Checkout = () => {
   );
   const [paymentMethod, setPaymentMethod] = useState("cod");
   const [placingOrder, setPlacingOrder] = useState(false);
+  const storageKey = getStorageKey(localStorage.getItem("username"));
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
-    const saved = localStorage.getItem(STORAGE_KEY);
+    const saved = localStorage.getItem(storageKey);
     if (saved) {
       try {
         const parsed = JSON.parse(saved) as DeliveryDetails[];
@@ -71,7 +75,7 @@ const Checkout = () => {
         setDetails(emptyDetails);
       }
     }
-  }, []);
+  }, [storageKey]);
 
   const grandTotal = useMemo(
     () =>
@@ -144,7 +148,7 @@ const Checkout = () => {
     setAddresses(nextAddresses);
     setSelectedId(newId);
     setDetails(nextDetails);
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(nextAddresses));
+    localStorage.setItem(storageKey, JSON.stringify(nextAddresses));
     setEditMode(false);
     setAddingNew(false);
     setShowSelector(false);

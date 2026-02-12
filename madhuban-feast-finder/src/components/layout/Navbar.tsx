@@ -200,6 +200,12 @@ const Navbar = () => {
                         size="sm"
                         className="w-full flex items-center gap-2"
                         onClick={() => {
+                          const storedUsername = localStorage.getItem("username");
+                          if (storedUsername) {
+                            localStorage.removeItem(
+                              `delivery_addresses_v1_${storedUsername.toLowerCase()}`
+                            );
+                          }
                           localStorage.removeItem("token");
                           localStorage.removeItem("username");
                           localStorage.removeItem("isAdmin");
@@ -281,6 +287,12 @@ const Navbar = () => {
                 variant="outline"
                 className="w-full mt-3"
                 onClick={() => {
+                  const storedUsername = localStorage.getItem("username");
+                  if (storedUsername) {
+                    localStorage.removeItem(
+                      `delivery_addresses_v1_${storedUsername.toLowerCase()}`
+                    );
+                  }
                   localStorage.removeItem("token");
                   localStorage.removeItem("username");
                   localStorage.removeItem("isAdmin");
