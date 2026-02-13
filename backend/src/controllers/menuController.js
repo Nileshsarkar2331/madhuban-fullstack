@@ -43,3 +43,21 @@ exports.listMenuItems = async (req, res) => {
     return res.status(500).json({ message: "Server error" });
   }
 };
+
+exports.deleteMenuItem = async (req, res) => {
+  try {
+    if (mongoose.connection.readyState !== 1) {
+      return res.status(503).json({ message: "Database not connected" });
+    }
+
+    const { id } = req.params;
+    const deleted = await MenuItem.findByIdAndDelete(id);
+    if (!deleted) {
+      return res.status(404).json({ message: "Menu item not found" });
+    }
+    return res.status(200).json({ message: "Menu item deleted" });
+  } catch (error) {
+    console.error(error);
+    return res.status(500).json({ message: "Server error" });
+  }
+};

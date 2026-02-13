@@ -94,6 +94,10 @@ const Admin = () => {
   const [productPrice, setProductPrice] = useState("");
   const [productCategory, setProductCategory] = useState("");
   const [productSaving, setProductSaving] = useState(false);
+  const [menuItems, setMenuItems] = useState<
+    Array<{ _id: string; name: string; price: number; categoryId: string }>
+  >([]);
+  const [menuError, setMenuError] = useState("");
 
   const categoryOptions = [
     { id: "momos", label: "Momos" },
@@ -159,6 +163,7 @@ const Admin = () => {
       setProductName("");
       setProductPrice("");
       setProductCategory("");
+      fetchMenuItems();
     } catch (err: any) {
       toast({
         title: "Server error",
@@ -167,6 +172,43 @@ const Admin = () => {
       });
     } finally {
       setProductSaving(false);
+    }
+  };
+
+  const fetchMenuItems = async () => {
+    setMenuError("");
+    try {
+      const res = await fetch(`${API_BASE_URL}/api/menu-items`);
+      if (!res.ok) {
+        throw new Error("Failed to load items");
+      }
+      const data = await res.json();
+      setMenuItems(Array.isArray(data.items) ? data.items : []);
+    } catch (err: any) {
+      setMenuError(err?.message || "Failed to load items");
+    }
+  };
+
+  const handleDeleteProduct = async (id: string) => {
+    if (!confirm("Delete this item?")) return;
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetch(`${API_BASE_URL}/api/menu-items/${id}`, {
+        method: "DELETE",
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+      });
+      if (!res.ok) {
+        throw new Error("Failed to delete item");
+      }
+      setMenuItems((prev) => prev.filter((item) => item._id !== id));
+    } catch (err: any) {
+      toast({
+        title: "Delete failed",
+        description: err?.message || "Please try again.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -234,6 +276,12 @@ const Admin = () => {
     const id = window.setInterval(() => fetchOrders(false), 10000);
     return () => window.clearInterval(id);
   }, []);
+
+  useEffect(() => {
+    if (active === "menu") {
+      fetchMenuItems();
+    }
+  }, [active]);
 
   const setupPush = async (requestPermission: boolean) => {
     try {
@@ -590,20 +638,43 @@ const Admin = () => {
                   </div>
                 </div>
                 <div className="rounded-2xl border border-border/60 p-5">
-                  <div className="font-semibold">Quick Controls</div>
-                  <div className="mt-4 space-y-3 text-sm text-muted-foreground">
-                    <div className="flex items-center justify-between">
-                      <span>Show item in menu</span>
-                      <input type="checkbox" defaultChecked />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>Mark as popular</span>
-                      <input type="checkbox" />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span>Enable online order</span>
-                      <input type="checkbox" defaultChecked />
-                    </div>
+                  <div className="flex items-center justify-between">
+                    <div className="font-semibold">Menu Items</div>
+                    <Button variant="outline" size="sm" onClick={fetchMenuItems}>
+                      Refresh
+                    </Button>
+                  </div>
+                  {menuError && (
+                    <div className="mt-3 text-sm text-red-500">{menuError}</div>
+                  )}
+                  <div className="mt-4 space-y-3 text-sm">
+                    {menuItems.length === 0 && (
+                      <div className="text-muted-foreground">
+                        No custom items yet.
+                      </div>
+                    )}
+                    {menuItems.map((item) => (
+                      <div
+                        key={item._id}
+                        className="flex items-center justify-between gap-3 rounded-xl border border-border/60 px-3 py-2"
+                      >
+                        <div>
+                          <div className="font-medium">{item.name}</div>
+                          <div className="text-xs text-muted-foreground">
+                            ₹{item.price} •{" "}
+                            {categoryOptions.find((c) => c.id === item.categoryId)
+                              ?.label || item.categoryId}
+                          </div>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleDeleteProduct(item._id)}
+                        >
+                          Delete
+                        </Button>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
