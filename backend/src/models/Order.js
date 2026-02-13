@@ -47,6 +47,7 @@ const orderSchema = new mongoose.Schema(
     totals: { type: totalsSchema, default: {} },
     paymentMethod: { type: String, default: "cod" },
     status: { type: String, default: "placed" },
+    canceledSeenByUser: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

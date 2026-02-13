@@ -64,7 +64,18 @@ const MyOrders = () => {
           throw new Error(data.message || "Failed to load orders");
         }
         const data = await res.json();
-        setOrders(Array.isArray(data.orders) ? data.orders : []);
+        const nextOrders = Array.isArray(data.orders) ? data.orders : [];
+        setOrders(nextOrders);
+        const canceledIds = nextOrders
+          .filter((order) => order.status === "canceled")
+          .map((order) => order._id);
+        if (canceledIds.length > 0) {
+          window.setTimeout(() => {
+            setOrders((prev) =>
+              prev.filter((order) => !canceledIds.includes(order._id))
+            );
+          }, 5000);
+        }
       } catch (err: any) {
         setError(err?.message || "Failed to load orders");
       } finally {

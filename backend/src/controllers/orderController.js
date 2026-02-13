@@ -110,9 +110,24 @@ exports.listMyOrders = async (req, res) => {
     if (!userId) {
       return res.status(200).json({ orders: [] });
     }
-    const orders = await Order.find({ userId })
+    const orders = await Order.find({
+      userId,
+      $or: [
+        { status: { $ne: "canceled" } },
+        { status: "canceled", canceledSeenByUser: false },
+      ],
+    })
       .sort({ createdAt: -1 })
       .lean();
+    const canceledToMark = orders
+      .filter((order) => order.status === "canceled")
+      .map((order) => order._id);
+    if (canceledToMark.length > 0) {
+      await Order.updateMany(
+        { _id: { $in: canceledToMark } },
+        { $set: { canceledSeenByUser: true } }
+      );
+    }
     const orderIds = orders.map((order) => String(order._id));
     const reviews = await Review.find({ orderId: { $in: orderIds } })
       .select("orderId")
@@ -142,11 +157,11 @@ exports.updateOrderStatus = async (req, res) => {
       return res.status(400).json({ message: "Invalid status" });
     }
 
-    const order = await Order.findByIdAndUpdate(
-      id,
-      { status },
-      { new: true }
-    );
+    const update = { status };
+    if (status === "canceled") {
+      update.canceledSeenByUser = false;
+    }
+    const order = await Order.findByIdAndUpdate(id, update, { new: true });
     if (!order) {
       return res.status(404).json({ message: "Order not found" });
     }
@@ -230,6 +245,7 @@ exports.cancelMyOrder = async (req, res) => {
     }
 
     order.status = "canceled";
+    order.canceledSeenByUser = false;
     await order.save();
 
     return res.status(200).json({ message: "Order canceled", order });
