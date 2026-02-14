@@ -7,6 +7,7 @@ type Review = {
   comment?: string;
   images?: string[];
   createdAt: string;
+  username?: string;
 };
 
 const ReviewsSection = () => {
@@ -72,6 +73,11 @@ const ReviewsSection = () => {
                   />
                 ))}
               </div>
+              {review.username && (
+                <div className="mt-2 text-sm font-medium text-foreground">
+                  {review.username}
+                </div>
+              )}
               {review.comment && (
                 <p className="mt-3 text-sm text-muted-foreground">
                   {review.comment}

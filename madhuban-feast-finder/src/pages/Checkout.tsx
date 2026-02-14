@@ -15,7 +15,6 @@ type DeliveryDetails = {
   altPhone: string;
   addressLine1: string;
   addressLine2: string;
-  landmark: string;
   city: string;
   state: string;
   pincode: string;
@@ -34,8 +33,7 @@ const emptyDetails: DeliveryDetails = {
   altPhone: "",
   addressLine1: "",
   addressLine2: "",
-  landmark: "",
-  city: "",
+    city: "",
   state: "",
   pincode: "",
   instructions: "",
@@ -331,7 +329,6 @@ const Checkout = () => {
                           <div className="text-sm text-muted-foreground">
                             {addr.addressLine1}
                             {addr.addressLine2 ? `, ${addr.addressLine2}` : ""}
-                            {addr.landmark ? `, ${addr.landmark}` : ""}
                             {addr.city ? `, ${addr.city}` : ""}
                             {addr.state ? `, ${addr.state}` : ""}
                             {addr.pincode ? ` - ${addr.pincode}` : ""}
@@ -417,12 +414,7 @@ const Checkout = () => {
                 </div>
 
                 <div className="grid sm:grid-cols-3 gap-4">
-                  <Input
-                    name="landmark"
-                    placeholder="Landmark"
-                    value={details.landmark}
-                    onChange={handleChange}
-                  />
+                  <div className="h-10" />
                   <select
                     name="city"
                     value={details.city}
@@ -513,7 +505,6 @@ const Checkout = () => {
                 <div className="text-muted-foreground">
                   {details.addressLine1}
                   {details.addressLine2 ? `, ${details.addressLine2}` : ""}
-                  {details.landmark ? `, ${details.landmark}` : ""}
                   {details.city ? `, ${details.city}` : ""}
                   {details.state ? `, ${details.state}` : ""}
                   {details.pincode ? ` - ${details.pincode}` : ""}

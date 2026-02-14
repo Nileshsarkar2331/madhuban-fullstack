@@ -82,6 +82,7 @@ const Admin = () => {
       images?: string[];
       createdAt: string;
       isVisible?: boolean;
+      username?: string;
     }>
   >([]);
   const [reviewsError, setReviewsError] = useState("");
@@ -869,6 +870,11 @@ const Admin = () => {
                           {new Date(review.createdAt).toLocaleString()}
                         </div>
                       </div>
+                      {review.username && (
+                        <div className="mt-1 text-sm text-muted-foreground">
+                          By: {review.username}
+                        </div>
+                      )}
                       <div className="mt-2 flex items-center gap-2 text-sm">
                         <label className="inline-flex items-center gap-2">
                           <input

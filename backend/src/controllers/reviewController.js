@@ -41,6 +41,7 @@ exports.createReview = async (req, res) => {
     const review = await Review.create({
       orderId: String(orderId),
       userId: String(userId),
+      username: String(order.customerUsername || ""),
       rating: parsedRating,
       comment: comment || "",
       images: safeImages,
@@ -76,7 +77,7 @@ exports.listPublicReviews = async (req, res) => {
     const reviews = await Review.find({ isVisible: true })
       .sort({ createdAt: -1 })
       .limit(6)
-      .select("rating comment images createdAt")
+      .select("rating comment images createdAt username")
       .lean();
     return res.status(200).json({ reviews });
   } catch (error) {
