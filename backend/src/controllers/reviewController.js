@@ -45,6 +45,7 @@ exports.createReview = async (req, res) => {
       rating: parsedRating,
       comment: comment || "",
       images: safeImages,
+      isVisible: false,
     });
 
     return res.status(201).json({ message: "Review submitted", review });

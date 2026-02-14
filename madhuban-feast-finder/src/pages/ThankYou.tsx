@@ -16,7 +16,7 @@ const ThankYou = () => {
           Thank you for your order!
         </div>
         <p className="text-muted-foreground text-lg mb-6">
-          Your order will be delivered within 25 minutes.
+          Your order will be delivered within 35–40 minutes.
         </p>
         <p className="text-muted-foreground mb-8">
           For more information, contact us at{" "}
