@@ -7,6 +7,21 @@ export type CartItem = {
 };
 
 const CART_KEY = "cart_items_v1";
+const MIN_QTY = 5;
+const MIN_QTY_ITEM_IDS = new Set(["1101", "1102"]);
+
+const isMinQtyItem = (dishId: string, name?: string) => {
+  const baseId = dishId.split("-")[0];
+  if (MIN_QTY_ITEM_IDS.has(baseId)) return true;
+  if (!name) return false;
+  const lowered = name.toLowerCase();
+  return lowered.includes("kulhad chai") || lowered.includes("hot coffee");
+};
+
+const notifyMinQty = () => {
+  if (typeof window === "undefined") return;
+  window.alert("Minimum quantity for Kulhad Chai and Hot Coffee is 5.");
+};
 
 const safeParse = (value: string | null): CartItem[] => {
   if (!value) return [];
@@ -41,18 +56,30 @@ export const addToCart = (
 ) => {
   const items = readCart();
   const existing = items.find((i) => i.dishId === dishId);
+  const minItem = isMinQtyItem(dishId, meta?.name || existing?.name);
 
   if (existing) {
-    existing.quantity += quantity;
+    const nextQty = existing.quantity + quantity;
+    if (minItem && nextQty < MIN_QTY) {
+      notifyMinQty();
+      existing.quantity = MIN_QTY;
+    } else {
+      existing.quantity = nextQty;
+    }
     if (meta) {
       existing.name = meta.name ?? existing.name;
       existing.price = meta.price ?? existing.price;
       existing.image = meta.image ?? existing.image;
     }
   } else {
+    let nextQty = quantity;
+    if (minItem && nextQty < MIN_QTY) {
+      notifyMinQty();
+      nextQty = MIN_QTY;
+    }
     items.push({
       dishId,
-      quantity,
+      quantity: nextQty,
       name: meta?.name,
       price: meta?.price,
       image: meta?.image,
@@ -64,7 +91,15 @@ export const addToCart = (
 
 export const updateCartQuantity = (dishId: string, quantity: number) => {
   const items = readCart()
-    .map((item) => (item.dishId === dishId ? { ...item, quantity } : item))
+    .map((item) => {
+      if (item.dishId !== dishId) return item;
+      const minItem = isMinQtyItem(dishId, item.name);
+      if (minItem && quantity > 0 && quantity < MIN_QTY) {
+        notifyMinQty();
+        return { ...item, quantity: MIN_QTY };
+      }
+      return { ...item, quantity };
+    })
     .filter((item) => item.quantity > 0);
 
   writeCart(items);
