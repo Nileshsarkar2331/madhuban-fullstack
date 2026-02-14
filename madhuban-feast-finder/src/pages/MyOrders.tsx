@@ -84,7 +84,7 @@ const MyOrders = () => {
     };
 
     fetchOrders();
-    const id = window.setInterval(fetchOrders, 120000);
+    const id = window.setInterval(fetchOrders, 10000);
     return () => window.clearInterval(id);
   }, []);
 
