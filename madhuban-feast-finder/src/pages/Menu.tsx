@@ -166,7 +166,7 @@ const Menu = () => {
         { id: 1105, name: 'Oreo Shake', price: 70, priceLabel: '₹70' },
         { id: 1106, name: 'Chocolate Shake', price: 70, priceLabel: '₹70' },
         { id: 1107, name: 'Mint Mojito', price: 70, priceLabel: '₹70' },
-        { id: 1108, name: 'Blue Lagoon', price: 70, priceLabel: '₹70' },
+        { id: 1108, name: 'Blue Lagoon', price: 99, priceLabel: '₹99' },
         {
           id: 1109,
           name: 'Sweet & Salty Lemonade',
