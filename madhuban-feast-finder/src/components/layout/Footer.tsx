@@ -11,7 +11,7 @@ const Footer = () => {
   ];
 
   const socialLinks = [
-    { icon: Instagram, href: '#', label: 'Instagram' },
+    { icon: Instagram, href: 'https://www.instagram.com/madhu_van_cafe/', label: 'Instagram' },
     { icon: Facebook, href: '#', label: 'Facebook' },
     { icon: MessageCircle, href: '#', label: 'WhatsApp' },
   ];
@@ -106,7 +106,18 @@ const Footer = () => {
           <p>&copy; 2024 Madhu वन Cafe & Restaurant. All rights reserved.</p>
         </div>
          <div className="border-t border-primary-foreground/20 mt-8 pt-6 text-center text-primary-foreground/60 text-sm">
-          <p> Made by Nilesh Sarkar❤️</p>
+          <p>
+            Made by{" "}
+            <a
+              href="https://portfolio-ja9y.vercel.app/"
+              className="underline hover:text-secondary transition-colors"
+              target="_blank"
+              rel="noreferrer"
+            >
+              Nilesh Sarkar
+            </a>
+            ❤️
+          </p>
         </div>
       </div>
     </footer>
