@@ -1,12 +1,14 @@
-const mongoose = require("mongoose");
-const MenuItem = require("../models/MenuItem");
+const { supabase } = require("../config/supabase");
+const { mapDbRow, mapDbRows } = require("../utils/dbMappers");
+
+const throwIfError = (error) => {
+  if (error) {
+    throw error;
+  }
+};
 
 exports.createMenuItem = async (req, res) => {
   try {
-    if (mongoose.connection.readyState !== 1) {
-      return res.status(503).json({ message: "Database not connected" });
-    }
-
     const { name, price, categoryId } = req.body || {};
     if (!name || !price || !categoryId) {
       return res.status(400).json({ message: "Name, price, category required" });
@@ -17,13 +19,22 @@ exports.createMenuItem = async (req, res) => {
       return res.status(400).json({ message: "Invalid price" });
     }
 
-    const item = await MenuItem.create({
-      name: String(name).trim(),
-      price: parsedPrice,
-      categoryId: String(categoryId).trim(),
-    });
+    const { data, error } = await supabase
+      .from("menu_items")
+      .insert({
+        name: String(name).trim(),
+        price: parsedPrice,
+        category_id: String(categoryId).trim(),
+      })
+      .select("*")
+      .single();
 
-    return res.status(201).json({ message: "Menu item added", item });
+    throwIfError(error);
+
+    return res.status(201).json({
+      message: "Menu item added",
+      item: mapDbRow(data),
+    });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Server error" });
@@ -32,12 +43,14 @@ exports.createMenuItem = async (req, res) => {
 
 exports.listMenuItems = async (req, res) => {
   try {
-    if (mongoose.connection.readyState !== 1) {
-      return res.status(503).json({ message: "Database not connected" });
-    }
+    const { data, error } = await supabase
+      .from("menu_items")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-    const items = await MenuItem.find().sort({ createdAt: -1 }).lean();
-    return res.status(200).json({ items });
+    throwIfError(error);
+
+    return res.status(200).json({ items: mapDbRows(data) });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Server error" });
@@ -46,15 +59,21 @@ exports.listMenuItems = async (req, res) => {
 
 exports.deleteMenuItem = async (req, res) => {
   try {
-    if (mongoose.connection.readyState !== 1) {
-      return res.status(503).json({ message: "Database not connected" });
-    }
-
     const { id } = req.params;
-    const deleted = await MenuItem.findByIdAndDelete(id);
-    if (!deleted) {
+
+    const { data, error } = await supabase
+      .from("menu_items")
+      .delete()
+      .eq("id", id)
+      .select("id")
+      .limit(1);
+
+    throwIfError(error);
+
+    if (!data || data.length === 0) {
       return res.status(404).json({ message: "Menu item not found" });
     }
+
     return res.status(200).json({ message: "Menu item deleted" });
   } catch (error) {
     console.error(error);

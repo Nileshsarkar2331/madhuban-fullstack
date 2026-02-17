@@ -1,44 +1,84 @@
-const Cart = require("../models/Cart");
+const { supabase } = require("../config/supabase");
+const { mapDbRow } = require("../utils/dbMappers");
+
+const throwIfError = (error) => {
+  if (error) {
+    throw error;
+  }
+};
+
+const getCartByUserId = async (userId) => {
+  const { data, error } = await supabase
+    .from("carts")
+    .select("*")
+    .eq("user_id", userId)
+    .limit(1);
+
+  throwIfError(error);
+
+  if (!data || data.length === 0) {
+    return null;
+  }
+
+  return mapDbRow(data[0]);
+};
 
 /**
  * ADD ITEM TO CART
  */
 exports.addToCart = async (req, res) => {
   try {
-    const userId = req.userId;
+    const userId = req.user?.id;
     const { dishId, quantity = 1 } = req.body;
 
     if (!dishId) {
       return res.status(400).json({ message: "Dish ID is required" });
     }
 
-    let cart = await Cart.findOne({ userId });
+    const parsedQty = Math.max(1, Number(quantity) || 1);
 
-    // If cart does not exist, create new
+    let cart = await getCartByUserId(userId);
+
     if (!cart) {
-      cart = await Cart.create({
-        userId,
-        items: [{ dishId, quantity }],
-      });
-      return res.status(200).json(cart);
+      const { data, error } = await supabase
+        .from("carts")
+        .insert({
+          user_id: userId,
+          items: [{ dishId, quantity: parsedQty }],
+        })
+        .select("*")
+        .single();
+
+      throwIfError(error);
+      return res.status(200).json(mapDbRow(data));
     }
 
-    // Check if dish already exists
-    const itemIndex = cart.items.findIndex(
-      (item) => item.dishId.toString() === dishId
-    );
+    const items = Array.isArray(cart.items) ? [...cart.items] : [];
+    const itemIndex = items.findIndex((item) => String(item.dishId) === String(dishId));
 
     if (itemIndex > -1) {
-      cart.items[itemIndex].quantity += quantity;
+      const currentQty = Number(items[itemIndex].quantity) || 0;
+      items[itemIndex] = {
+        ...items[itemIndex],
+        quantity: currentQty + parsedQty,
+      };
     } else {
-      cart.items.push({ dishId, quantity });
+      items.push({ dishId, quantity: parsedQty });
     }
 
-    await cart.save();
-    res.status(200).json(cart);
+    const { data: updatedRows, error: updateError } = await supabase
+      .from("carts")
+      .update({ items })
+      .eq("id", cart._id)
+      .select("*")
+      .limit(1);
+
+    throwIfError(updateError);
+
+    return res.status(200).json(mapDbRow(updatedRows[0]));
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -47,18 +87,17 @@ exports.addToCart = async (req, res) => {
  */
 exports.getCart = async (req, res) => {
   try {
-    const userId = req.userId;
-
-    const cart = await Cart.findOne({ userId });
+    const userId = req.user?.id;
+    const cart = await getCartByUserId(userId);
 
     if (!cart) {
       return res.status(200).json({ items: [] });
     }
 
-    res.status(200).json(cart);
+    return res.status(200).json(cart);
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -67,24 +106,32 @@ exports.getCart = async (req, res) => {
  */
 exports.removeFromCart = async (req, res) => {
   try {
-    const userId = req.userId;
+    const userId = req.user?.id;
     const { dishId } = req.params;
 
-    const cart = await Cart.findOne({ userId });
+    const cart = await getCartByUserId(userId);
 
     if (!cart) {
       return res.status(404).json({ message: "Cart not found" });
     }
 
-    cart.items = cart.items.filter(
-      (item) => item.dishId.toString() !== dishId
+    const items = (Array.isArray(cart.items) ? cart.items : []).filter(
+      (item) => String(item.dishId) !== String(dishId)
     );
 
-    await cart.save();
-    res.status(200).json(cart);
+    const { data: updatedRows, error: updateError } = await supabase
+      .from("carts")
+      .update({ items })
+      .eq("id", cart._id)
+      .select("*")
+      .limit(1);
+
+    throwIfError(updateError);
+
+    return res.status(200).json(mapDbRow(updatedRows[0]));
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -93,7 +140,7 @@ exports.removeFromCart = async (req, res) => {
  */
 exports.updateQuantity = async (req, res) => {
   try {
-    const userId = req.userId;
+    const userId = req.user?.id;
     const { dishId } = req.params;
     const { quantity } = req.body;
 
@@ -101,26 +148,36 @@ exports.updateQuantity = async (req, res) => {
       return res.status(400).json({ message: "Quantity must be at least 1" });
     }
 
-    const cart = await Cart.findOne({ userId });
+    const cart = await getCartByUserId(userId);
 
     if (!cart) {
       return res.status(404).json({ message: "Cart not found" });
     }
 
-    const item = cart.items.find(
-      (item) => item.dishId.toString() === dishId
-    );
+    const items = Array.isArray(cart.items) ? [...cart.items] : [];
+    const itemIndex = items.findIndex((item) => String(item.dishId) === String(dishId));
 
-    if (!item) {
+    if (itemIndex === -1) {
       return res.status(404).json({ message: "Item not found in cart" });
     }
 
-    item.quantity = quantity;
-    await cart.save();
+    items[itemIndex] = {
+      ...items[itemIndex],
+      quantity: Number(quantity),
+    };
 
-    res.status(200).json(cart);
+    const { data: updatedRows, error: updateError } = await supabase
+      .from("carts")
+      .update({ items })
+      .eq("id", cart._id)
+      .select("*")
+      .limit(1);
+
+    throwIfError(updateError);
+
+    return res.status(200).json(mapDbRow(updatedRows[0]));
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: "Server error" });
   }
 };

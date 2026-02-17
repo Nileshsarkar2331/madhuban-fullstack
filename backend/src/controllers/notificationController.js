@@ -1,23 +1,30 @@
-const mongoose = require("mongoose");
-const PushSubscription = require("../models/PushSubscription");
+const { supabase } = require("../config/supabase");
+
+const throwIfError = (error) => {
+  if (error) {
+    throw error;
+  }
+};
 
 exports.subscribe = async (req, res) => {
   try {
-    if (mongoose.connection.readyState !== 1) {
-      return res.status(503).json({ message: "Database not connected" });
-    }
-
     const { endpoint, keys } = req.body || {};
     if (!endpoint || !keys?.p256dh || !keys?.auth) {
       return res.status(400).json({ message: "Invalid subscription" });
     }
 
     const isAdmin = Boolean(req.user?.isAdmin);
-    await PushSubscription.updateOne(
-      { endpoint },
-      { $set: { endpoint, keys, isAdmin } },
-      { upsert: true }
+
+    const { error } = await supabase.from("push_subscriptions").upsert(
+      {
+        endpoint,
+        keys,
+        is_admin: isAdmin,
+      },
+      { onConflict: "endpoint" }
     );
+
+    throwIfError(error);
 
     return res.status(200).json({ message: "Subscribed" });
   } catch (error) {

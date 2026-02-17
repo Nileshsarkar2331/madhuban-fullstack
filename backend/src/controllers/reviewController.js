@@ -1,13 +1,14 @@
-const mongoose = require("mongoose");
-const Review = require("../models/Review");
-const Order = require("../models/Order");
+const { supabase } = require("../config/supabase");
+const { mapDbRow, mapDbRows } = require("../utils/dbMappers");
+
+const throwIfError = (error) => {
+  if (error) {
+    throw error;
+  }
+};
 
 exports.createReview = async (req, res) => {
   try {
-    if (mongoose.connection.readyState !== 1) {
-      return res.status(503).json({ message: "Database not connected" });
-    }
-
     const userId = req.user?.id;
     const { orderId, rating, comment, images } = req.body || {};
 
@@ -20,16 +21,34 @@ exports.createReview = async (req, res) => {
       return res.status(400).json({ message: "Rating must be 1 to 5" });
     }
 
-    const order = await Order.findOne({ _id: orderId, userId }).lean();
-    if (!order) {
+    const { data: orderRows, error: orderError } = await supabase
+      .from("orders")
+      .select("id, status, customer_username")
+      .eq("id", String(orderId))
+      .eq("user_id", String(userId))
+      .limit(1);
+
+    throwIfError(orderError);
+
+    if (!orderRows || orderRows.length === 0) {
       return res.status(404).json({ message: "Order not found" });
     }
+
+    const order = mapDbRow(orderRows[0]);
+
     if (order.status !== "delivered") {
       return res.status(400).json({ message: "Order not delivered yet" });
     }
 
-    const existing = await Review.findOne({ orderId }).lean();
-    if (existing) {
+    const { data: existingRows, error: existingError } = await supabase
+      .from("reviews")
+      .select("id")
+      .eq("order_id", String(orderId))
+      .limit(1);
+
+    throwIfError(existingError);
+
+    if (existingRows && existingRows.length > 0) {
       return res.status(400).json({ message: "Review already submitted" });
     }
 
@@ -38,17 +57,26 @@ exports.createReview = async (req, res) => {
       return res.status(400).json({ message: "At least one image is required" });
     }
 
-    const review = await Review.create({
-      orderId: String(orderId),
-      userId: String(userId),
-      username: String(order.customerUsername || ""),
-      rating: parsedRating,
-      comment: comment || "",
-      images: safeImages,
-      isVisible: false,
-    });
+    const { data, error } = await supabase
+      .from("reviews")
+      .insert({
+        order_id: String(orderId),
+        user_id: String(userId),
+        username: String(order.customerUsername || ""),
+        rating: parsedRating,
+        comment: comment || "",
+        images: safeImages,
+        is_visible: false,
+      })
+      .select("*")
+      .single();
 
-    return res.status(201).json({ message: "Review submitted", review });
+    throwIfError(error);
+
+    return res.status(201).json({
+      message: "Review submitted",
+      review: mapDbRow(data),
+    });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Server error" });
@@ -57,12 +85,14 @@ exports.createReview = async (req, res) => {
 
 exports.listReviews = async (req, res) => {
   try {
-    if (mongoose.connection.readyState !== 1) {
-      return res.status(503).json({ message: "Database not connected" });
-    }
+    const { data, error } = await supabase
+      .from("reviews")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-    const reviews = await Review.find().sort({ createdAt: -1 }).lean();
-    return res.status(200).json({ reviews });
+    throwIfError(error);
+
+    return res.status(200).json({ reviews: mapDbRows(data) });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Server error" });
@@ -71,16 +101,16 @@ exports.listReviews = async (req, res) => {
 
 exports.listPublicReviews = async (req, res) => {
   try {
-    if (mongoose.connection.readyState !== 1) {
-      return res.status(503).json({ message: "Database not connected" });
-    }
+    const { data, error } = await supabase
+      .from("reviews")
+      .select("id, rating, comment, images, created_at, username, is_visible")
+      .eq("is_visible", true)
+      .order("created_at", { ascending: false })
+      .limit(6);
 
-    const reviews = await Review.find({ isVisible: true })
-      .sort({ createdAt: -1 })
-      .limit(6)
-      .select("rating comment images createdAt username")
-      .lean();
-    return res.status(200).json({ reviews });
+    throwIfError(error);
+
+    return res.status(200).json({ reviews: mapDbRows(data) });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Server error" });
@@ -89,21 +119,26 @@ exports.listPublicReviews = async (req, res) => {
 
 exports.updateReviewVisibility = async (req, res) => {
   try {
-    if (mongoose.connection.readyState !== 1) {
-      return res.status(503).json({ message: "Database not connected" });
-    }
-
     const { id } = req.params;
     const { isVisible } = req.body || {};
-    const review = await Review.findByIdAndUpdate(
-      id,
-      { isVisible: Boolean(isVisible) },
-      { new: true }
-    );
-    if (!review) {
+
+    const { data, error } = await supabase
+      .from("reviews")
+      .update({ is_visible: Boolean(isVisible) })
+      .eq("id", id)
+      .select("*")
+      .limit(1);
+
+    throwIfError(error);
+
+    if (!data || data.length === 0) {
       return res.status(404).json({ message: "Review not found" });
     }
-    return res.status(200).json({ message: "Updated", review });
+
+    return res.status(200).json({
+      message: "Updated",
+      review: mapDbRow(data[0]),
+    });
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: "Server error" });
