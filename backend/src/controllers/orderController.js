@@ -1,6 +1,7 @@
 const { supabase } = require("../config/supabase");
 const { mapDbRow, mapDbRows } = require("../utils/dbMappers");
 const webpush = require("web-push");
+const { sendOrderPlacedEmail } = require("../utils/orderEmailNotifier");
 
 const throwIfError = (error) => {
   if (error) {
@@ -93,6 +94,18 @@ exports.createOrder = async (req, res) => {
           // ignore failed endpoints
         }
       }
+    }
+
+    try {
+      const emailResult = await sendOrderPlacedEmail(order);
+      if (!emailResult.sent) {
+        console.warn(
+          `Order email notification skipped: ${emailResult.reason || "unknown"}`
+        );
+      }
+    } catch (emailError) {
+      // Do not fail order placement when email delivery fails.
+      console.error("Order email notification failed:", emailError.message);
     }
 
     return res.status(201).json({ message: "Order placed", order });
