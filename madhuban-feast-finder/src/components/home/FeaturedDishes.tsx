@@ -10,6 +10,10 @@ import gulabJamunImage from '@/assets/gulab-jamun.jpg';
 import { useNavigate } from 'react-router-dom';
 import { addToCart, removeFromCart, updateCartQuantity } from '@/lib/cart';
 import { useCart } from '@/hooks/use-cart';
+import {
+  isOnlineDeliverable,
+  ONLINE_DELIVERY_BLOCK_MESSAGE,
+} from '@/lib/onlineDelivery';
 
 
 const FeaturedDishes = () => {
@@ -95,6 +99,10 @@ const FeaturedDishes = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           {dishes.map((dish) => (
             <Card key={dish.id} className="card-restaurant group cursor-pointer">
+              {(() => {
+                const canDeliverOnline = isOnlineDeliverable(dish.name);
+                return (
+                  <>
               <div className="relative overflow-hidden">
                 <img
                   src={dish.image}
@@ -120,20 +128,22 @@ const FeaturedDishes = () => {
                 </div>
 
                 {/* Quick Add Button */}
-                <Button
-                  size="icon"
-                  variant="secondary"
-                  className="absolute bottom-3 right-3 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300 h-8 w-8"
-                  onClick={() =>
-                    addToCart(String(dish.id), 1, {
-                      name: dish.name,
-                      price: dish.price,
-                      image: dish.image,
-                    })
-                  }
-                >
-                  <Plus className="h-4 w-4" />
-                </Button>
+                {canDeliverOnline && (
+                  <Button
+                    size="icon"
+                    variant="secondary"
+                    className="absolute bottom-3 right-3 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity duration-300 h-8 w-8"
+                    onClick={() =>
+                      addToCart(String(dish.id), 1, {
+                        name: dish.name,
+                        price: dish.price,
+                        image: dish.image,
+                      })
+                    }
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
 
               <CardContent className="p-4 space-y-3">
@@ -176,6 +186,14 @@ const FeaturedDishes = () => {
                   const cartKey = String(dish.id);
                   const qty =
                     cartItems.find((i) => i.dishId === cartKey)?.quantity || 0;
+
+                  if (!canDeliverOnline) {
+                    return (
+                      <span className="text-sm font-medium text-destructive">
+                        {ONLINE_DELIVERY_BLOCK_MESSAGE}
+                      </span>
+                    );
+                  }
 
                   if (qty === 0) {
                     return (
@@ -231,6 +249,9 @@ const FeaturedDishes = () => {
                 })()}
               </div>
               </CardContent>
+              </>
+                );
+              })()}
             </Card>
           ))}
         </div>

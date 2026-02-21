@@ -7,6 +7,10 @@ import { Search, Plus, Minus } from 'lucide-react';
 import { addToCart, removeFromCart, updateCartQuantity } from '@/lib/cart';
 import { API_BASE_URL } from '@/lib/api';
 import { useCart } from '@/hooks/use-cart';
+import {
+  isOnlineDeliverable,
+  ONLINE_DELIVERY_BLOCK_MESSAGE,
+} from '@/lib/onlineDelivery';
 import { useNavigate, useParams } from 'react-router-dom';
 
 type MenuItem = {
@@ -97,7 +101,8 @@ const Menu = () => {
     return sizeLabel ? `${key}-${sizeLabel}` : key;
   };
 
-  const handleAddToCart = (item: MenuItem) => {
+  const handleAddToCart = (item: MenuItem, sectionId: string) => {
+    if (!isOnlineDeliverable(item.name, item.categoryId || sectionId)) return;
     const key = getItemKey(item);
     setLoadingId(key);
     const price = getSelectedPrice(item);
@@ -694,17 +699,29 @@ const Menu = () => {
                         )}
                       </div>
                       {(() => {
+                        const canDeliverOnline = isOnlineDeliverable(
+                          item.name,
+                          item.categoryId || section.id
+                        );
                         const cartKey = getCartKey(item);
                         const qty =
                           cartItems.find((i) => i.dishId === cartKey)
                             ?.quantity || 0;
+
+                        if (!canDeliverOnline) {
+                          return (
+                            <span className="text-sm font-medium text-destructive">
+                              {ONLINE_DELIVERY_BLOCK_MESSAGE}
+                            </span>
+                          );
+                        }
 
                         if (qty === 0) {
                           return (
                             <Button
                               size="sm"
                               disabled={loadingId === getItemKey(item)}
-                              onClick={() => handleAddToCart(item)}
+                              onClick={() => handleAddToCart(item, section.id)}
                               className="w-full sm:w-auto"
                             >
                               {loadingId === getItemKey(item)
@@ -736,7 +753,7 @@ const Menu = () => {
                             <Button
                               variant="outline"
                               size="icon"
-                              onClick={() => handleAddToCart(item)}
+                              onClick={() => handleAddToCart(item, section.id)}
                             >
                               <Plus className="h-4 w-4" />
                             </Button>
