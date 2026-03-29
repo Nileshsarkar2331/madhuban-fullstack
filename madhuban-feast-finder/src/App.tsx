@@ -56,7 +56,8 @@ const App = () => (
       <Routes>
         {/* MAIN APP */}
         <Route path="/" element={<Layout />}>
-          <Route index element={<Index />} />
+          <Route index element={<Navigate to="/menu" replace />} />
+          <Route path="home" element={<Index />} />
           <Route path="menu" element={<Menu />} />
           <Route path="menu/:category" element={<Menu />} />
           <Route path="about" element={<About />} />

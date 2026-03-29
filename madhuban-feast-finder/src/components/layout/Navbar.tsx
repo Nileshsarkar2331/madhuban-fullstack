@@ -77,7 +77,7 @@ const Navbar = () => {
   };
 
   const navItems = [
-    { name: "Home", path: "/" },
+    { name: "Home", path: "/home" },
     { name: "Menu", path: "/menu" },
     { name: "About Us", path: "/about" },
     { name: "Contact", path: "/contact" },
@@ -97,7 +97,7 @@ const Navbar = () => {
         <div className="flex items-center justify-between h-16 gap-2">
           
           {/* LOGO */}
-          <Link to="/" className="flex items-center gap-2 min-w-0">
+          <Link to="/home" className="flex items-center gap-2 min-w-0">
             <Leaf className="h-6 w-6 text-secondary" />
             <span className="text-xl sm:text-2xl font-bold text-gradient truncate">
               Madhu<span className="text-primary">वन</span>
